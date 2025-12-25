@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { KpiSection } from "./KpiSection";
 import { KpiEditModal } from "./KpiEditModal";
+import { KpiCreateModal } from "./KpiCreateModal";
 import type { ChainKpi, ProductionChain } from "../../../../api/productionChains";
 
 interface KpiManagementSectionProps {
@@ -16,7 +17,6 @@ interface KpiManagementSectionProps {
   chainKpis?: ChainKpi[];
   onKpiCompletionUpdate?: () => void;
   onKpiUpdate?: () => void;
-  onCreateNewKpi?: () => void;
 }
 
 export function KpiManagementSection({
@@ -31,13 +31,17 @@ export function KpiManagementSection({
   userRole,
   chainKpis = [],
   onKpiCompletionUpdate,
-  onKpiUpdate,
-  onCreateNewKpi
+  onKpiUpdate
 }: KpiManagementSectionProps) {
   const [showKpiEditModal, setShowKpiEditModal] = useState(false);
+  const [showKpiCreateModal, setShowKpiCreateModal] = useState(false);
 
   const handleOpenKpiEditModal = () => {
     setShowKpiEditModal(true);
+  };
+
+  const handleOpenKpiCreateModal = () => {
+    setShowKpiCreateModal(true);
   };
 
   const isAdmin = userRole === 'admin';
@@ -56,7 +60,7 @@ export function KpiManagementSection({
         chainKpis={chainKpis}
         onOpenKpiEditModal={handleOpenKpiEditModal}
         onKpiCompletionUpdate={onKpiCompletionUpdate}
-        onCreateNewKpi={onCreateNewKpi}
+        onCreateNewKpi={handleOpenKpiCreateModal}
       />
 
       <KpiEditModal
@@ -66,6 +70,13 @@ export function KpiManagementSection({
         onClose={() => setShowKpiEditModal(false)}
         onSuccess={onKpiUpdate}
         userRole={userRole || 'user'}
+      />
+
+      <KpiCreateModal
+        isOpen={showKpiCreateModal}
+        chain={productionChain}
+        onClose={() => setShowKpiCreateModal(false)}
+        onSuccess={onKpiUpdate}
       />
     </>
   );

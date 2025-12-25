@@ -242,11 +242,6 @@ export default function ProductionChainsList() {
     }
   };
 
-  const handleCreateNewKpi = () => {
-    // For now, just show a message. In future, open a modal to create new KPI
-    alert('Tính năng ban hành KPI mới sẽ được triển khai. Hiện tại vui lòng tạo KPI qua API hoặc database.');
-  };
-
   const handleDeleteChain = async (chain: ProductionChain) => {
     if (!chain.chain_id) return;
 
@@ -519,7 +514,6 @@ export default function ProductionChainsList() {
                     chainKpis={chainKpisForThisChain}
                     onKpiCompletionUpdate={handleKpiCompletionUpdate}
                     onKpiUpdate={handleKpiUpdate}
-                    onCreateNewKpi={handleCreateNewKpi}
                   />
                 );
               })()}
