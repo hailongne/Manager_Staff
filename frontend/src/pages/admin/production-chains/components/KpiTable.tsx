@@ -1,4 +1,5 @@
 import type { ChainKpi } from "../types";
+import { KpiFilter } from "./KpiFilter";
 
 interface KpiTableProps {
   kpi: ChainKpi;
@@ -6,9 +7,13 @@ interface KpiTableProps {
   formatDayDetail: (dateStr: string) => string;
   onDayRightClick: (dateStr: string, event: React.MouseEvent) => void;
   canCompleteKpi: boolean;
+  hasMultipleKpis: boolean;
+  chainKpis: ChainKpi[];
+  selectedKpiId: string;
+  onKpiFilterChange: (kpiId: string) => void;
 }
 
-export function KpiTable({ kpi, formatDate, formatDayDetail, onDayRightClick, canCompleteKpi }: KpiTableProps) {
+export function KpiTable({ kpi, formatDate, formatDayDetail, onDayRightClick, canCompleteKpi, hasMultipleKpis, chainKpis, selectedKpiId, onKpiFilterChange }: KpiTableProps) {
   if (!kpi.weeks || kpi.weeks.length === 0) {
     return (
       <p className="text-xs text-sky-600">
@@ -20,6 +25,15 @@ export function KpiTable({ kpi, formatDate, formatDayDetail, onDayRightClick, ca
   return (
     <div className="space-y-3">
       <h5 className="text-sm font-medium text-sky-700">Lịch trình tuần:</h5>
+      
+                {/* KPI Filter when multiple KPIs exist */}
+                {hasMultipleKpis && (
+                  <KpiFilter
+                    chainKpis={chainKpis}
+                    selectedKpiId={selectedKpiId}
+                    onKpiFilterChange={onKpiFilterChange}
+                  />
+                )}
       {kpi.weeks.map((week) => (
         <div key={week.week_index} className="rounded-lg border border-sky-200 bg-white p-3">
           <div className="flex items-center justify-between mb-2">

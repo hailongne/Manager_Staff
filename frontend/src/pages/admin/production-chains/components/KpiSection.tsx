@@ -1,7 +1,6 @@
 import type { ChainKpi } from "../types";
 import { toggleDayCompletion } from "../../../../api/productionChains";
 import { useState, useEffect } from "react";
-import { KpiFilter } from "./KpiFilter";
 import { KpiActions } from "./KpiActions";
 import { KpiSummary } from "./KpiSummary";
 import { KpiTable } from "./KpiTable";
@@ -119,15 +118,6 @@ export function KpiSection({
           <h4 className="text-sm font-semibold text-sky-700">
             {localSelectedKpi ? `KPI từ ${formatDate(localSelectedKpi.start_date)} đến ${formatDate(localSelectedKpi.end_date)}` : `KPI tháng ${kpiSummaryMonth}/${kpiSummaryYear}`}
           </h4>
-
-          {/* KPI Filter when multiple KPIs exist */}
-          {hasMultipleKpis && (
-            <KpiFilter
-              chainKpis={chainKpis}
-              selectedKpiId={selectedKpiId}
-              onKpiFilterChange={handleKpiFilterChange}
-            />
-          )}
         </div>
 
         <KpiActions
@@ -151,6 +141,10 @@ export function KpiSection({
             formatDayDetail={formatDayDetail}
             onDayRightClick={handleDayRightClick}
             canCompleteKpi={canCompleteKpi}
+            hasMultipleKpis={hasMultipleKpis}
+            chainKpis={chainKpis}
+            selectedKpiId={selectedKpiId}
+            onKpiFilterChange={handleKpiFilterChange}
           />
         </div>
       ) : (
