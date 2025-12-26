@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { KpiSection } from "./KpiSection";
 import { KpiEditModal } from "./KpiEditModal";
 import { KpiCreateModal } from "./KpiCreateModal";
@@ -37,6 +37,12 @@ export function KpiManagementSection({
 }: KpiManagementSectionProps) {
   const [showKpiEditModal, setShowKpiEditModal] = useState(false);
   const [showKpiCreateModal, setShowKpiCreateModal] = useState(false);
+  const [currentSelectedKpi, setCurrentSelectedKpi] = useState<ChainKpi | null>(selectedKpi);
+
+  // Update currentSelectedKpi when selectedKpi changes
+  useEffect(() => {
+    setCurrentSelectedKpi(selectedKpi);
+  }, [selectedKpi]);
 
   const handleOpenKpiEditModal = () => {
     setShowKpiEditModal(true);
@@ -44,6 +50,10 @@ export function KpiManagementSection({
 
   const handleOpenKpiCreateModal = () => {
     setShowKpiCreateModal(true);
+  };
+
+  const handleKpiSelectionChange = (kpi: ChainKpi | null) => {
+    setCurrentSelectedKpi(kpi);
   };
 
   const isAdmin = userRole === 'admin';
@@ -64,11 +74,12 @@ export function KpiManagementSection({
         onKpiCompletionUpdate={onKpiCompletionUpdate}
         onCreateNewKpi={handleOpenKpiCreateModal}
         onDeleteKpi={onDeleteKpi}
+        onKpiSelectionChange={handleKpiSelectionChange}
       />
 
       <KpiEditModal
         isOpen={showKpiEditModal}
-        kpi={selectedKpi}
+        kpi={currentSelectedKpi}
         chain={productionChain}
         onClose={() => setShowKpiEditModal(false)}
         onSuccess={onKpiUpdate}

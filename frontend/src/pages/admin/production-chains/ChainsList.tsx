@@ -534,20 +534,71 @@ export default function ProductionChainsList() {
               {/* KPI Section */}
               {(() => {
                 const chainKpisForThisChain = chainKpis.filter(kpi => kpi.chain_id === chain.chain_id && kpi.chain_id != null);
-                const latestKpi = chainKpisForThisChain.length > 0 ? chainKpisForThisChain.reduce((latest, current) => {
-                  const latestDate = latest.start_date ? new Date(latest.start_date) : new Date(0);
-                  const currentDate = current.start_date ? new Date(current.start_date) : new Date(0);
-                  return currentDate > latestDate ? current : latest;
-                }) : null;
+                
+                // Function to find the most relevant KPI for current month
+                const findRelevantKpi = (kpis: ChainKpi[]) => {
+                  if (kpis.length === 0) return null;
+                  
+                  // Current date in Vietnam timezone (assuming UTC+7)
+                  const now = new Date();
+                  const currentMonth = now.getMonth(); // 0-based
+                  const currentYear = now.getFullYear();
+                  
+                  // First, try to find KPI that contains current month
+                  const currentKpi = kpis.find(kpi => {
+                    if (!kpi.start_date || !kpi.end_date) return false;
+                    const startDate = new Date(kpi.start_date);
+                    const endDate = new Date(kpi.end_date);
+                    const kpiStartMonth = startDate.getMonth();
+                    const kpiStartYear = startDate.getFullYear();
+                    const kpiEndMonth = endDate.getMonth();
+                    const kpiEndYear = endDate.getFullYear();
+                    
+                    // Check if current month/year is within KPI period
+                    const currentTime = currentYear * 12 + currentMonth;
+                    const startTime = kpiStartYear * 12 + kpiStartMonth;
+                    const endTime = kpiEndYear * 12 + kpiEndMonth;
+                    
+                    return currentTime >= startTime && currentTime <= endTime;
+                  });
+                  
+                  if (currentKpi) return currentKpi;
+                  
+                  // If no current KPI, find the one with closest end_date to current date
+                  // Prioritize future KPIs over past ones
+                  return kpis.reduce((closest, current) => {
+                    if (!closest.end_date || !current.end_date) return closest;
+                    
+                    const closestEndDate = new Date(closest.end_date);
+                    const currentEndDate = new Date(current.end_date);
+                    const now = new Date();
+                    
+                    const closestDiff = Math.abs(closestEndDate.getTime() - now.getTime());
+                    const currentDiff = Math.abs(currentEndDate.getTime() - now.getTime());
+                    
+                    // If both are in future or both in past, choose closer one
+                    if ((closestEndDate >= now && currentEndDate >= now) || (closestEndDate < now && currentEndDate < now)) {
+                      return currentDiff < closestDiff ? current : closest;
+                    }
+                    
+                    // Prefer future KPIs over past ones
+                    if (currentEndDate >= now && closestEndDate < now) return current;
+                    if (closestEndDate >= now && currentEndDate < now) return closest;
+                    
+                    return currentDiff < closestDiff ? current : closest;
+                  });
+                };
+                
+                const relevantKpi = findRelevantKpi(chainKpisForThisChain);
                 
                 return (
                   <KpiManagementSection
                     productionChain={chain}
-                    selectedKpi={latestKpi}
-                    latestKpi={latestKpi}
+                    selectedKpi={relevantKpi}
+                    latestKpi={relevantKpi}
                     hasKpis={chainKpisForThisChain.length > 0}
-                    kpiSummaryMonth={latestKpi?.start_date ? new Date(latestKpi.start_date).getMonth() + 1 : new Date().getMonth() + 1}
-                    kpiSummaryYear={latestKpi?.start_date ? new Date(latestKpi.start_date).getFullYear() : new Date().getFullYear()}
+                    kpiSummaryMonth={relevantKpi?.start_date ? new Date(relevantKpi.start_date).getMonth() + 1 : new Date().getMonth() + 1}
+                    kpiSummaryYear={relevantKpi?.start_date ? new Date(relevantKpi.start_date).getFullYear() : new Date().getFullYear()}
                     canCompleteKpi={canCompleteKpi}
                     canEditKpi={canEditKpi}
                     userRole={user?.role}

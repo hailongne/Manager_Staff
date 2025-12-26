@@ -20,6 +20,7 @@ interface KpiSectionProps {
   onKpiCompletionUpdate?: () => void;
   onCreateNewKpi?: () => void;
   onDeleteKpi?: (kpiId: number) => void;
+  onKpiSelectionChange?: (kpi: ChainKpi | null) => void;
 }
 
 export function KpiSection({
@@ -35,7 +36,8 @@ export function KpiSection({
   onOpenKpiEditModal,
   onKpiCompletionUpdate,
   onCreateNewKpi,
-  onDeleteKpi
+  onDeleteKpi,
+  onKpiSelectionChange
 }: KpiSectionProps) {
   const [localSelectedKpi, setLocalSelectedKpi] = useState<ChainKpi | null>(selectedKpi);
   const [selectedKpiId, setSelectedKpiId] = useState<string>('');
@@ -47,6 +49,11 @@ export function KpiSection({
     setLocalSelectedKpi(selectedKpi);
     setSelectedKpiId(selectedKpi?.chain_kpi_id?.toString() || '');
   }, [selectedKpi]);
+
+  // Notify parent when localSelectedKpi changes
+  useEffect(() => {
+    onKpiSelectionChange?.(localSelectedKpi);
+  }, [localSelectedKpi, onKpiSelectionChange]);
 
   // Check if there are multiple KPIs for filtering
   const hasMultipleKpis = chainKpis.length > 1;
