@@ -21,7 +21,7 @@ export interface ProductionChainStep {
   step_order: number;
   department_id: number;
   title: string;
-  description?: string;
+  // description?: string;
   estimated_duration?: number;
   created_at?: string;
   updated_at?: string;
@@ -35,12 +35,6 @@ export interface ProductionChain {
   chain_id?: number;
   name: string;
   description?: string;
-  start_date?: string;
-  end_date?: string;
-  total_kpi?: number;
-  feedback?: string;
-  feedback_by?: number;
-  feedback_at?: string;
   created_by: number;
   status: 'active' | 'inactive';
   created_at?: string;
@@ -61,9 +55,6 @@ export interface ProductionChain {
 export const createProductionChain = async (data: {
   name: string;
   description?: string;
-  start_date: string;
-  end_date: string;
-  total_kpi: number;
   steps: Omit<ProductionChainStep, 'step_id' | 'chain_id' | 'estimated_duration'>[];
 }): Promise<ProductionChain> => {
   const { data: response } = await api.post("/production-chains", data);
@@ -121,9 +112,6 @@ export const updateProductionChain = async (
   data: {
     name: string;
     description?: string;
-    start_date: string;
-    end_date: string;
-    total_kpi: number;
     steps: Omit<ProductionChainStep, 'step_id' | 'chain_id' | 'estimated_duration'>[];
   }
 ): Promise<ProductionChain> => {
@@ -135,9 +123,9 @@ export const updateProductionChain = async (
 export const addFeedback = async (
   chain_id: number,
   feedback: string
-): Promise<ProductionChain> => {
+): Promise<ProductionChainFeedback> => {
   const { data: response } = await api.post(`/production-chains/${chain_id}/feedback`, { feedback });
-  return response.chain;
+  return response.feedback;
 };
 
 // Lấy danh sách phản hồi của chuỗi
@@ -220,6 +208,8 @@ export const createChainKpi = async (
     year: number;
     month: number;
     target_value: number;
+    start_date?: string;
+    end_date?: string;
   }
 ): Promise<ChainKpi> => {
   const { data: response } = await api.post(`/production-chains/${chain_id}/kpis`, data);

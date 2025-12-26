@@ -7,7 +7,6 @@ const setupAssociations = (models) => {
   const {
     User,
     Department,
-    Task,
     ProductionChain,
     ProductionChainStep,
     ProductionChainFeedback,
@@ -34,12 +33,6 @@ const setupAssociations = (models) => {
   });
 
   // ============================================
-  // Tasks
-  // ============================================
-  User.hasMany(Task, { foreignKey: 'user_id' });
-  Task.belongsTo(User, { foreignKey: 'user_id' });
-
-  // ============================================
   // Timesheet & Leave
   // ============================================
   User.hasMany(Timesheet, { foreignKey: 'user_id' });
@@ -59,8 +52,6 @@ const setupAssociations = (models) => {
   // ============================================
   User.hasMany(ProductionChain, { foreignKey: 'created_by' });
   ProductionChain.belongsTo(User, { foreignKey: 'created_by', as: 'creator' });
-
-  ProductionChain.belongsTo(User, { foreignKey: 'feedback_by', as: 'feedbackUser' });
 
   ProductionChain.hasMany(ProductionChainStep, { foreignKey: 'chain_id', as: 'steps' });
   ProductionChainStep.belongsTo(ProductionChain, { foreignKey: 'chain_id', as: 'chain' });

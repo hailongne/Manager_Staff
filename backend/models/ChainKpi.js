@@ -27,6 +27,14 @@ const ChainKpi = sequelize.define('ChainKpi', {
     type: DataTypes.INTEGER,
     allowNull: false
   },
+  start_date: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  end_date: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
   unit_label: {
     type: DataTypes.STRING,
     allowNull: false,

@@ -6,7 +6,6 @@
 // Core models
 const User = require('./User');
 const Department = require('./Department');
-const Task = require('./Task');
 
 // Production Chain
 const ProductionChain = require('./ProductionChain');
@@ -28,7 +27,6 @@ const setupAssociations = require('./associations');
 const models = {
   User,
   Department,
-  Task,
   ProductionChain,
   ProductionChainStep,
   ProductionChainFeedback,

@@ -4,7 +4,6 @@ import RouteGuard from "./components/RouteGuard";
 import AdminRoute from "./components/routes/AdminRoute";
 import ManagerRoute from "./components/routes/ManagerRoute";
 import Dashboard from "./pages/shared/dashboard";
-import Tasks from "./pages/shared/tasks";
 import Users from "./pages/admin/users";
 import Reports from "./pages/shared/reports";
 import Profile from "./pages/user/profile";
@@ -45,7 +44,6 @@ function AppContent() {
       {/* Protected routes */}
       <Route element={<RouteGuard><Layout /></RouteGuard>}>
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/tasks" element={<Tasks />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/change-password" element={<ChangePassword />} />

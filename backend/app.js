@@ -12,13 +12,11 @@ require('./models');
 // Import routes
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
-const taskRoutes = require('./routes/taskRoutes');
 const timesheetRoutes = require('./routes/timesheetRoutes');
 const profileUpdateRoutes = require('./routes/profileUpdateRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const departmentRoutes = require('./routes/departmentRoutes');
 const productionChainRoutes = require('./routes/productionChainRoutes');
-const { scheduleTaskReminderJob } = require('./jobs/taskReminderJob');
 
 // ============= MIDDLEWARE =============
 app.use(express.json());
@@ -29,9 +27,6 @@ app.use('/api/auth', authRoutes);
 
 // Users
 app.use('/api/users', userRoutes);
-
-// Tasks
-app.use('/api/tasks', taskRoutes);
 
 // Time Management
 app.use('/api/timesheets', timesheetRoutes);
@@ -69,7 +64,6 @@ async function bootstrap() {
       console.log('[2] Sync skipped (set FORCE_SYNC=true to enable)');
     }
 
-    scheduleTaskReminderJob();
     app.listen(port, () =>
       console.log(`✓ Server running on port ${port}`)
     );

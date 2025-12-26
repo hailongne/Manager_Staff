@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Clock, Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { updateProductionChain } from "../../../api/productionChains";
 import type { ProductionChain, ProductionChainStep } from "../../../api/productionChains";
 import { getDepartments } from "../../../api/departments";
@@ -20,14 +20,10 @@ interface EditChainBasicModalProps {
 interface UpdateChainPayload {
   name: string;
   description?: string;
-  start_date: string;
-  end_date: string;
-  total_kpi: number;
   steps: {
     step_order: number;
     department_id: number;
     title: string;
-    description?: string;
   }[];
 }
 
@@ -42,11 +38,6 @@ export function EditChainBasicModal({ isOpen, onClose, onSuccess, chain, kpiComp
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(false);
   const [editPermission, setEditPermission] = useState<EditPermission>('UNKNOWN');
-
-  // Time-related state
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [selectedPreset, setSelectedPreset] = useState("");
 
   // Check if chain has completed KPIs (has completion records, excluding weekends)
   const hasCompletedKpi = useCallback(() => {
@@ -70,62 +61,12 @@ export function EditChainBasicModal({ isOpen, onClose, onSuccess, chain, kpiComp
     }
   };
 
-  // Calculate end date based on preset
-  const calculateEndDate = (preset: string, start: string) => {
-    if (!start) return "";
-    const startDate = new Date(start);
-
-    switch (preset) {
-      case "7-days":
-        return new Date(startDate.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      case "14-days":
-        return new Date(startDate.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      case "30-days":
-        return new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      case "60-days":
-        return new Date(startDate.getTime() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      case "90-days":
-        return new Date(startDate.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      case "180-days":
-        return new Date(startDate.getTime() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      case "365-days":
-        return new Date(startDate.getTime() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      default:
-        return "";
-    }
-  };
-
-  // Handle preset selection
-  const handlePresetChange = (preset: string) => {
-    setSelectedPreset(preset);
-    if (startDate) {
-      const calculatedEndDate = calculateEndDate(preset, startDate);
-      setEndDate(calculatedEndDate);
-    }
-  };
-
-  // Handle start date change
-  const handleStartDateChange = (date: string) => {
-    setStartDate(date);
-    if (selectedPreset) {
-      const calculatedEndDate = calculateEndDate(selectedPreset, date);
-      setEndDate(calculatedEndDate);
-    }
-  };
-
   useEffect(() => {
     if (isOpen && chain) {
 
       setName(chain.name);
       setDescription(chain.description || "");
       setSteps([...chain.steps]);
-
-      // Load time-related data - ensure proper date format for input[type="date"]
-      const startDateValue = chain.start_date ? new Date(chain.start_date).toISOString().split('T')[0] : "";
-      const endDateValue = chain.end_date ? new Date(chain.end_date).toISOString().split('T')[0] : "";
-
-      setStartDate(startDateValue);
-      setEndDate(endDateValue);
 
       loadDepartments();
       
@@ -152,8 +93,7 @@ export function EditChainBasicModal({ isOpen, onClose, onSuccess, chain, kpiComp
     const newStep: ProductionChainStep = {
       step_order: steps.length + 1,
       department_id: 0,
-      title: "",
-      description: ""
+      title: ""
     };
     setSteps([...steps, newStep]);
   };
@@ -180,20 +120,6 @@ export function EditChainBasicModal({ isOpen, onClose, onSuccess, chain, kpiComp
       return;
     }
 
-    // Validate time fields
-    if (!startDate) {
-      showErrorToast("Ngày bắt đầu là bắt buộc");
-      return;
-    }
-    if (!endDate) {
-      showErrorToast("Ngày kết thúc là bắt buộc");
-      return;
-    }
-    if (new Date(startDate) >= new Date(endDate)) {
-      showErrorToast("Ngày kết thúc phải sau ngày bắt đầu");
-      return;
-    }
-
     // Validate steps only if editing is allowed
     if (editPermission === 'ALLOWED') {
       for (let i = 0; i < steps.length; i++) {
@@ -215,22 +141,17 @@ export function EditChainBasicModal({ isOpen, onClose, onSuccess, chain, kpiComp
       const payload: UpdateChainPayload = {
         name: name.trim(),
         description: description.trim(),
-        start_date: editPermission === 'LOCKED' ? chain.start_date! : startDate,
-        end_date: editPermission === 'LOCKED' ? chain.end_date! : endDate,
-        total_kpi: chain.total_kpi || 0,
-        // CRITICAL: If LOCKED, preserve step_order and department_id but allow title/description updates
+        // CRITICAL: If LOCKED, preserve step_order and department_id but allow title updates
         steps: editPermission === 'LOCKED'
           ? chain.steps.map((originalStep: ProductionChainStep, index: number) => ({
               step_order: originalStep.step_order,
               department_id: originalStep.department_id,
-              title: steps[index]?.title?.trim() || originalStep.title.trim(),
-              description: (steps[index]?.description?.trim() || originalStep.description?.trim()) || ""
+              title: steps[index]?.title?.trim() || originalStep.title.trim()
             }))
           : steps.map(step => ({
               step_order: step.step_order,
               department_id: step.department_id,
-              title: step.title.trim(),
-              description: step.description?.trim() || ""
+              title: step.title.trim()
             }))
       };
 
@@ -295,71 +216,6 @@ export function EditChainBasicModal({ isOpen, onClose, onSuccess, chain, kpiComp
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
                 />
-              </div>
-            </div>
-
-            {/* Time Period Section */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-                <Clock size={18} />
-                Thời hạn
-                {editPermission === 'LOCKED' && (
-                  <span className="text-sm font-normal text-orange-600 ml-2">
-                    (Đã khóa - không thể chỉnh sửa)
-                  </span>
-                )}
-              </h4>
-              
-
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  Thời hạn
-                </label>
-                <select
-                  value={selectedPreset}
-                  onChange={(e) => handlePresetChange(e.target.value)}
-                  disabled={editPermission === 'LOCKED'}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 disabled:bg-gray-100"
-                >
-                  <option value="">Chọn khung thời gian</option>
-                  <option value="7-days">7 ngày</option>
-                  <option value="14-days">14 ngày</option>
-                  <option value="30-days">30 ngày</option>
-                  <option value="60-days">60 ngày</option>
-                  <option value="90-days">90 ngày</option>
-                  <option value="180-days">180 ngày</option>
-                  <option value="365-days">365 ngày</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">
-                    Ngày bắt đầu <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => handleStartDateChange(e.target.value)}
-                    disabled={editPermission === 'LOCKED'}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 disabled:bg-gray-100"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">
-                    Ngày kết thúc <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    disabled={editPermission === 'LOCKED'}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 disabled:bg-gray-100"
-                    required
-                  />
-                </div>
               </div>
             </div>
 
@@ -450,18 +306,6 @@ export function EditChainBasicModal({ isOpen, onClose, onSuccess, chain, kpiComp
                   </option>
                   ))}
                   </select>
-                  </div>
-
-                  <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Mô tả chi tiết
-                  </label>
-                  <textarea
-                  value={step.description || ""}
-                  onChange={(e) => updateStep(index, 'description', e.target.value)}
-                  rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                  />
                   </div>
                   </div>
                   </div>

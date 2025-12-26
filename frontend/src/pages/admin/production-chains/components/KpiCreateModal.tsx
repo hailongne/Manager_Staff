@@ -183,7 +183,9 @@ export function KpiCreateModal({ isOpen, chain, onClose, onSuccess }: KpiCreateM
       await createChainKpi(chain.chain_id!, {
         year: new Date().getFullYear(),
         month: new Date().getMonth() + 1, // Current month
-        target_value: totalKPI
+        target_value: totalKPI,
+        start_date: startDate,
+        end_date: endDate
       });
 
       showSuccessToast("Ban hành KPI thành công!");

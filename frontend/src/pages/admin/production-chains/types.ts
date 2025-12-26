@@ -77,28 +77,6 @@ export interface KpiCompletionState {
   };
 }
 
-export interface ChainAssignment {
-  id: number;
-  chainId: number;
-  title: string;
-  description?: string;
-  topic?: string;
-  quantity: number;
-  unitLabel: string;
-  status: 'assigned' | 'in_progress' | 'completed' | 'cancelled';
-  creatorName?: string;
-  createdAt: string;
-  dueDate?: string;
-  weekIndex?: number;
-  feedbacks: {
-    id: number;
-    message: string;
-    status: string;
-    authorName?: string;
-    createdAt: string;
-  }[];
-}
-
 // Department link for KPI editing
 export interface DepartmentLink {
   departmentId: number;

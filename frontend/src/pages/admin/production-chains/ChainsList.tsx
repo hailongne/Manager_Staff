@@ -1,15 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getProductionChains, deleteProductionChain, getChainFeedbacks, sendFeedbackMessage, replyToFeedback, getChainKpis, getKpiCompletions, disableProductionChain, getDisabledProductionChains, enableProductionChain } from "../../../api/productionChains";
 import type { ProductionChain, ProductionChainStep, ProductionChainFeedback } from "../../../api/productionChains";
 import { useModalToast } from "../../../hooks/useToast";
 import { useAuth } from "../../../hooks/useAuth";
 import { KpiManagementSection } from "./components/KpiManagementSection";
-import { AssignmentSection } from "./components/AssignmentSection";
 import { EditChainBasicModal } from "./EditChainBasicModal";
 import { CreateChainForm } from "./CreateChainForm";
 import { TabNavigation } from "./components/TabNavigation";
 import { FeedbackModal } from "./components/FeedbackModal";
-import type { ChainKpi, ChainAssignment, KpiCompletionState } from "./types";
+import type { ChainKpi, KpiCompletionState } from "./types";
 
 type TabType = "list" | "disabled" | "create";
 
@@ -29,22 +28,71 @@ export default function ProductionChainsList() {
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
 
-  // KPI related state
-  const [chainKpis, setChainKpis] = useState<ChainKpi[]>([]);
-  const [kpiCompletionState, setKpiCompletionState] = useState<KpiCompletionState>({});
-
-  // Assignment related state
-  const [chainAssignments] = useState<ChainAssignment[]>([]);
-  const [assignmentsLoading] = useState(false);
-
-  // Edit modal state
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingChain, setEditingChain] = useState<ProductionChain | null>(null);
-
   // Helper function to check if user is admin
   const isAdmin = user?.role === 'admin';
   const canCompleteKpi = user?.role === 'admin' || user?.role === 'leader';
   const canEditKpi = user?.role === 'admin' || user?.role === 'leader';
+
+  // Filter chains based on user role and department
+  const filteredChains = useMemo(() => {
+    if (isAdmin) {
+      // Admin sees all chains
+      return chains.filter(chain =>
+        chain.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (chain.description && chain.description.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    } else if (user?.role === 'leader') {
+      // Leader only sees chains where their department participates
+      return chains.filter(chain => {
+        const matchesSearch = chain.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (chain.description && chain.description.toLowerCase().includes(searchTerm.toLowerCase()));
+        
+        if (!matchesSearch) return false;
+
+        // Check if leader's department is in this chain
+        if (!user.department_id) return false;
+        
+        const chainDepartmentIds = chain.steps?.map(step => step.department_id) || [];
+        return chainDepartmentIds.includes(user.department_id);
+      });
+    }
+    // Other users see no chains
+    return [];
+  }, [chains, searchTerm, isAdmin, user]);
+
+  const filteredDisabledChains = useMemo(() => {
+    if (isAdmin) {
+      // Admin sees all disabled chains
+      return disabledChains.filter(chain =>
+        chain.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (chain.description && chain.description.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    } else if (user?.role === 'leader') {
+      // Leader only sees disabled chains where their department participates
+      return disabledChains.filter(chain => {
+        const matchesSearch = chain.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (chain.description && chain.description.toLowerCase().includes(searchTerm.toLowerCase()));
+        
+        if (!matchesSearch) return false;
+
+        // Check if leader's department is in this chain
+        if (!user.department_id) return false;
+        
+        const chainDepartmentIds = chain.steps?.map(step => step.department_id) || [];
+        return chainDepartmentIds.includes(user.department_id);
+      });
+    }
+    // Other users see no chains
+    return [];
+  }, [disabledChains, searchTerm, isAdmin, user]);
+
+  // KPI related state
+  const [chainKpis, setChainKpis] = useState<ChainKpi[]>([]);
+  const [kpiCompletionState, setKpiCompletionState] = useState<KpiCompletionState>({});
+
+  // Edit modal state
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingChain, setEditingChain] = useState<ProductionChain | null>(null);
 
   console.log('ChainsList user:', user);
   console.log('ChainsList userRole:', user?.role);
@@ -158,17 +206,6 @@ export default function ProductionChainsList() {
       console.error("Lỗi tải KPIs:", error);
     }
   };
-
-  // Filtered chains based on search
-  const filteredChains = chains.filter(chain => {
-    const matchesName = chain.name.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesName;
-  });
-
-  const filteredDisabledChains = disabledChains.filter(chain => {
-    const matchesName = chain.name.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesName;
-  });
 
   const handleEditChain = (chain: ProductionChain) => {
     setEditingChain(chain);
@@ -374,10 +411,6 @@ export default function ProductionChainsList() {
     }
   };
 
-  const handleOpenFeedbackModal = (_assignment: ChainAssignment) => {
-    // TODO: Implement assignment feedback modal
-  };
-
   if (loading) {
     return (
       <div className="w-full px-8 py-8">
@@ -481,16 +514,6 @@ export default function ProductionChainsList() {
               </div>
 
               {/* Feedback Section */}
-              {chain.feedback && (
-                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <h4 className="font-medium text-blue-800 mb-2">Phản hồi từ {chain.feedbackUser?.name}:</h4>
-                  <p className="text-blue-700">{chain.feedback}</p>
-                  <p className="text-xs text-blue-600 mt-2">
-                    {chain.feedback_at ? new Date(chain.feedback_at).toLocaleString('vi-VN') : ''}
-                  </p>
-                </div>
-              )}
-
               {/* KPI Section */}
               {(() => {
                 const chainKpisForThisChain = chainKpis.filter(kpi => kpi.chain_id === chain.chain_id && kpi.chain_id != null);
@@ -518,13 +541,6 @@ export default function ProductionChainsList() {
                 );
               })()}
 
-              {/* Assignment Section */}
-              <AssignmentSection
-                chainAssignments={chainAssignments}
-                assignmentsLoading={assignmentsLoading}
-                canSubmitAssignmentFeedback={isManager() && !isAdmin}
-                onOpenFeedbackModal={handleOpenFeedbackModal}
-              />
             </div>
           ))}
 
@@ -611,12 +627,6 @@ export default function ProductionChainsList() {
                 <div className="flex items-center justify-between text-sm text-gray-500">
                   <div className="flex items-center gap-4">
                     <span>Tạo bởi: {chain.creator?.name || 'N/A'}</span>
-                    <span>KPI: {chain.total_kpi || 0}</span>
-                    {chain.start_date && chain.end_date && (
-                      <span>
-                        Thời hạn: {new Date(chain.start_date).toLocaleDateString('vi-VN')} - {new Date(chain.end_date).toLocaleDateString('vi-VN')}
-                      </span>
-                    )}
                   </div>
                   <span>{new Date(chain.created_at || '').toLocaleDateString('vi-VN')}</span>
                 </div>

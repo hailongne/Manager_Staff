@@ -9,7 +9,11 @@ const ProductionChainFeedback = sequelize.define('ProductionChainFeedback', {
   },
   chain_id: {
     type: DataTypes.INTEGER,
-    allowNull: false
+    allowNull: false,
+    references: {
+      model: 'production_chains',
+      key: 'chain_id'
+    }
   },
   message: {
     type: DataTypes.TEXT,
@@ -17,19 +21,21 @@ const ProductionChainFeedback = sequelize.define('ProductionChainFeedback', {
   },
   sender_id: {
     type: DataTypes.INTEGER,
-    allowNull: false
+    allowNull: false,
+    references: {
+      model: 'user',
+      key: 'user_id'
+    }
   },
   sender_role: {
     type: DataTypes.ENUM('leader', 'admin'),
     allowNull: false
-  },
-  created_at: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW
   }
 }, {
   tableName: 'production_chain_feedbacks',
-  timestamps: false
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at'
 });
 
 module.exports = ProductionChainFeedback;

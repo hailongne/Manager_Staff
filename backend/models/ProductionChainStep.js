@@ -23,10 +23,10 @@ const ProductionChainStep = sequelize.define('ProductionChainStep', {
     type: DataTypes.STRING,
     allowNull: false
   },
-  description: {
-    type: DataTypes.TEXT,
-    allowNull: true
-  },
+  // description: {
+  //   type: DataTypes.TEXT,
+  //   allowNull: true
+  // },
   // estimated_duration: {
   //   type: DataTypes.INTEGER, // hours
   //   allowNull: true

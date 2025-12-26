@@ -95,12 +95,6 @@ export function ChainCard({
       <div className="flex items-center justify-between text-sm text-gray-500">
         <div className="flex items-center gap-4">
           <span>Tạo bởi: {chain.creator?.name || 'N/A'}</span>
-          <span>KPI: {chain.total_kpi || 0}</span>
-          {chain.start_date && chain.end_date && (
-            <span>
-              Thời hạn: {new Date(chain.start_date).toLocaleDateString('vi-VN')} - {new Date(chain.end_date).toLocaleDateString('vi-VN')}
-            </span>
-          )}
         </div>
         <span>{new Date(chain.created_at || '').toLocaleDateString('vi-VN')}</span>
       </div>

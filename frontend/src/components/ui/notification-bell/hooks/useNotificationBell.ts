@@ -8,7 +8,6 @@ import {
   clearNotifications,
   type Notification
 } from "../../../../api/notifications";
-import { acknowledgeTask } from "../../../../api/tasks";
 import { useAuth } from "../../../../hooks/useAuth";
 import type { TabKey, TabConfig } from "../types";
 import {
@@ -182,7 +181,6 @@ export function useNotificationBell() {
 
     try {
       setAcknowledgingId(notification.notification_id);
-      await acknowledgeTask(String(notification.entity_id));
       await deleteNotification(notification.notification_id);
       setNotifications((prev) =>
         prev.filter((item) => item.notification_id !== notification.notification_id)

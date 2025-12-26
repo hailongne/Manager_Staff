@@ -15,7 +15,6 @@ router.use(auth);
 // Admin only routes
 router.post('/', authorize('admin'), productionChainController.createChain);
 router.put('/:chain_id', authorize('admin'), productionChainController.updateChain);
-router.put('/:chain_id/total-kpi', authorize(['admin', 'leader']), productionChainController.updateChainTotalKpi);
 router.patch('/:chain_id/disable', authorize('admin'), productionChainController.disableChain);
 router.patch('/:chain_id/enable', authorize('admin'), productionChainController.enableChain);
 router.delete('/:chain_id', authorize('admin'), productionChainController.deleteChain);

@@ -36,13 +36,6 @@ export function DayCard({
         {day.is_completed && (
           <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-green-500" title="Đã hoàn thành"></span>
         )}
-        {!day.is_completed && (!day.user_attending || (userRole !== 'admin' && userRole !== 'leader')) && (
-          <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-gray-400 flex items-center justify-center" title="Không đi làm">
-            <svg className="w-2 h-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </span>
-        )}
       </div>
 
       {/* Toggle Attending Button */}

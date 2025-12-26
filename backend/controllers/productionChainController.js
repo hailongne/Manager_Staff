@@ -3,90 +3,12 @@
  * API for managing production chains and steps
  */
 
-const { ProductionChain, ProductionChainStep, ProductionChainFeedback, ChainKpi, KpiCompletion, Department, Task, User } = require('../models');
+const { ProductionChain, ProductionChainStep, ProductionChainFeedback, ChainKpi, KpiCompletion, Department, User } = require('../models');
 const { HTTP_STATUS } = require('../utils/constants');
 const { Op } = require('sequelize');
 const { calculateKpiDistribution } = require('../utils/kpiHelpers');
 
-// Helper function to sync chain KPIs with date range
-const syncChainKpis = async (chainId, startDate, endDate, totalKpi, createdBy) => {
-  const startYear = startDate.getFullYear();
-  const startMonth = startDate.getMonth() + 1;
-  const endYear = endDate.getFullYear();
-  const endMonth = endDate.getMonth() + 1;
 
-  // Get all months in the new date range
-  const requiredMonths = [];
-  for (let year = startYear; year <= endYear; year++) {
-    const monthStart = year === startYear ? startMonth : 1;
-    const monthEnd = year === endYear ? endMonth : 12;
-
-    for (let month = monthStart; month <= monthEnd; month++) {
-      requiredMonths.push({ year, month });
-    }
-  }
-
-  // Get existing KPIs
-  const existingKpis = await ChainKpi.findAll({
-    where: { chain_id: chainId },
-    attributes: ['chain_kpi_id', 'year', 'month']
-  });
-
-  // Find KPIs to delete (those not in the new date range)
-  const existingMonths = existingKpis.map(kpi => `${kpi.year}-${kpi.month}`);
-  const requiredMonthsStr = requiredMonths.map(m => `${m.year}-${m.month}`);
-
-  const kpisToDelete = existingKpis.filter(kpi => 
-    !requiredMonthsStr.includes(`${kpi.year}-${kpi.month}`)
-  );
-
-  // Delete KPIs that are no longer needed
-  if (kpisToDelete.length > 0) {
-    await ChainKpi.destroy({
-      where: { chain_kpi_id: kpisToDelete.map(kpi => kpi.chain_kpi_id) }
-    });
-  }
-
-  // Calculate total months
-  const totalMonths = requiredMonths.length;
-
-  // Distribute total_kpi evenly among months
-  const baseKpi = Math.floor(totalKpi / totalMonths);
-  const remainder = totalKpi % totalMonths;
-
-  // Create new KPIs for months that don't exist
-  const kpiPromises = [];
-  for (let i = 0; i < requiredMonths.length; i++) {
-    const month = requiredMonths[i];
-    const exists = existingMonths.includes(`${month.year}-${month.month}`);
-    if (!exists) {
-      const targetValue = baseKpi + (i < remainder ? 1 : 0);
-      kpiPromises.push(
-        ChainKpi.create({
-          chain_id: chainId,
-          year: month.year,
-          month: month.month,
-          target_value: targetValue,
-          unit_label: 'sản phẩm',
-          notes: '',
-          created_by: createdBy
-        })
-      );
-    }
-  }
-
-  await Promise.all(kpiPromises);
-
-  // Update target_value for all remaining KPIs
-  for (let i = 0; i < requiredMonths.length; i++) {
-    const month = requiredMonths[i];
-    const targetValue = baseKpi + (i < remainder ? 1 : 0);
-    await ChainKpi.update(
-      { target_value: targetValue },
-      { where: { chain_id: chainId, year: month.year, month: month.month } }
-    );
-  }
-};
 
 // Helper functions for KPI completion logic
 const createDateKey = (date) => {
@@ -123,27 +45,11 @@ const getWorkingDaysInWeek = (kpi, weekIndex) => {
  */
 exports.createChain = async (req, res) => {
   try {
-    const { name, description, start_date, end_date, total_kpi, steps } = req.body;
+    const { name, description, steps } = req.body;
     const created_by = req.user.user_id;
 
     if (!name || !steps || !Array.isArray(steps) || steps.length === 0) {
       return res.status(400).json({ message: 'Tên và các bước là bắt buộc' });
-    }
-
-    // Validate dates and KPI
-    if (!start_date || !end_date) {
-      return res.status(400).json({ message: 'Ngày bắt đầu và kết thúc là bắt buộc' });
-    }
-
-    if (total_kpi === undefined || total_kpi < 0) {
-      return res.status(400).json({ message: 'Mục tiêu KPI phải là số không âm' });
-    }
-
-    const startDate = new Date(start_date);
-    const endDate = new Date(end_date);
-
-    if (startDate >= endDate) {
-      return res.status(400).json({ message: 'Ngày kết thúc phải sau ngày bắt đầu' });
     }
 
     // Validate steps
@@ -177,9 +83,6 @@ exports.createChain = async (req, res) => {
     const chain = await ProductionChain.create({
       name,
       description,
-      start_date: startDate,
-      end_date: endDate,
-      total_kpi,
       created_by
     });
 
@@ -189,77 +92,12 @@ exports.createChain = async (req, res) => {
         chain_id: chain.chain_id,
         step_order: step.step_order,
         department_id: step.department_id,
-        title: step.title,
-        description: step.description
+        title: step.title
+        // description: step.description
       })
     );
 
     await Promise.all(stepPromises);
-
-    // Create KPIs for all months in the chain period
-    const kpiPromises = [];
-    const startYear = startDate.getFullYear();
-    const startMonth = startDate.getMonth() + 1;
-    const endYear = endDate.getFullYear();
-    const endMonth = endDate.getMonth() + 1;
-
-    // Calculate total months
-    let totalMonths = 0;
-    for (let year = startYear; year <= endYear; year++) {
-      const monthStart = year === startYear ? startMonth : 1;
-      const monthEnd = year === endYear ? endMonth : 12;
-      totalMonths += monthEnd - monthStart + 1;
-    }
-
-    // Distribute total_kpi evenly among months
-    const baseKpi = Math.floor(total_kpi / totalMonths);
-    const remainder = total_kpi % totalMonths;
-    let monthIndex = 0;
-
-    for (let year = startYear; year <= endYear; year++) {
-      const monthStart = year === startYear ? startMonth : 1;
-      const monthEnd = year === endYear ? endMonth : 12;
-
-      for (let month = monthStart; month <= monthEnd; month++) {
-        // Check if KPI already exists for this month
-        const existingKpi = await ChainKpi.findOne({
-          where: { chain_id: chain.chain_id, year, month }
-        });
-
-        if (!existingKpi) {
-          const targetValue = baseKpi + (monthIndex < remainder ? 1 : 0);
-          
-          // Calculate KPI distribution for this month
-          const monthStartDate = new Date(year, month - 1, 1);
-          const monthEndDate = new Date(year, month, 0); // Last day of month
-          
-          // Adjust to chain dates if this is the first/last month
-          const actualStartDate = (year === startYear && month === startMonth) ? startDate : monthStartDate;
-          const actualEndDate = (year === endYear && month === endMonth) ? endDate : monthEndDate;
-          
-          const distribution = calculateKpiDistribution(
-            targetValue, 
-            actualStartDate.toISOString().split('T')[0], 
-            actualEndDate.toISOString().split('T')[0]
-          );
-          
-          kpiPromises.push(
-            ChainKpi.create({
-              chain_id: chain.chain_id,
-              year,
-              month,
-              target_value: targetValue,
-              unit_label: 'sản phẩm',
-              weeks: distribution.weeks,
-              created_by
-            })
-          );
-          monthIndex++;
-        }
-      }
-    }
-
-    await Promise.all(kpiPromises);
 
     res.status(201).json({
       message: 'Tạo chuỗi sản xuất thành công',
@@ -284,7 +122,7 @@ exports.createChain = async (req, res) => {
 exports.updateChain = async (req, res) => {
   try {
     const { chain_id } = req.params;
-    const { name, description, start_date, end_date, total_kpi, steps } = req.body;
+    const { name, description, steps } = req.body;
 
     const chain = await ProductionChain.findByPk(chain_id, {
       include: [{ model: ProductionChainStep, as: 'steps' }]
@@ -316,29 +154,6 @@ exports.updateChain = async (req, res) => {
           return res.status(400).json({ message: 'Không thể chỉnh sửa phòng ban hoặc thứ tự bước khi đã có dữ liệu hoàn thành' });
         }
       }
-      
-      if (start_date !== undefined || end_date !== undefined) {
-        return res.status(400).json({ message: 'Không thể chỉnh sửa thời gian của chuỗi đã có dữ liệu hoàn thành' });
-      }
-
-      // Allow updating total_kpi even with completions - it will sync target_value
-      if (total_kpi !== undefined) {
-        await chain.update({ total_kpi });
-        // Sync target_value of all chain KPIs by redistributing total_kpi
-        const chainKpis = await ChainKpi.findAll({
-          where: { chain_id },
-          order: [['year', 'ASC'], ['month', 'ASC']]
-        });
-        const totalMonths = chainKpis.length;
-        if (totalMonths > 0) {
-          const baseKpi = Math.floor(total_kpi / totalMonths);
-          const remainder = total_kpi % totalMonths;
-          for (let i = 0; i < chainKpis.length; i++) {
-            const targetValue = baseKpi + (i < remainder ? 1 : 0);
-            await chainKpis[i].update({ target_value: targetValue });
-          }
-        }
-      }
 
       await chain.update({ name, description });
       
@@ -349,8 +164,8 @@ exports.updateChain = async (req, res) => {
           const existingStep = chain.steps[i];
           if (existingStep && (stepUpdate.title !== existingStep.title || stepUpdate.description !== existingStep.description)) {
             await existingStep.update({
-              title: stepUpdate.title,
-              description: stepUpdate.description
+              title: stepUpdate.title
+              // description: stepUpdate.description
             });
           }
         }
@@ -359,22 +174,6 @@ exports.updateChain = async (req, res) => {
       // Allow full update
       if (!name || !steps || !Array.isArray(steps) || steps.length === 0) {
         return res.status(400).json({ message: 'Tên và các bước là bắt buộc' });
-      }
-
-      // Validate dates and KPI
-      if (!start_date || !end_date) {
-        return res.status(400).json({ message: 'Ngày bắt đầu và kết thúc là bắt buộc' });
-      }
-
-      if (total_kpi === undefined || total_kpi < 0) {
-        return res.status(400).json({ message: 'Mục tiêu KPI phải là số không âm' });
-      }
-
-      const startDate = new Date(start_date);
-      const endDate = new Date(end_date);
-
-      if (startDate >= endDate) {
-        return res.status(400).json({ message: 'Ngày kết thúc phải sau ngày bắt đầu' });
       }
 
       // Validate steps
@@ -407,17 +206,8 @@ exports.updateChain = async (req, res) => {
       // Update chain
       await chain.update({
         name,
-        description,
-        start_date: startDate,
-        end_date: endDate,
-        total_kpi
+        description
       });
-
-      // Update target_value of all chain KPIs to match the new total_kpi
-      await ChainKpi.update(
-        { target_value: total_kpi },
-        { where: { chain_id } }
-      );
 
       // Delete existing steps
       await ProductionChainStep.destroy({ where: { chain_id } });
@@ -428,24 +218,12 @@ exports.updateChain = async (req, res) => {
           chain_id,
           step_order: step.step_order,
           department_id: step.department_id,
-          title: step.title,
-          description: step.description
+          title: step.title
+          // description: step.description
         })
       );
 
       await Promise.all(stepPromises);
-
-      // Sync KPIs with the new date range
-      await syncChainKpis(chain_id, startDate, endDate, total_kpi, created_by);
-    }
-
-    // Always sync target_value with current total_kpi after any update
-    const updatedChain = await ProductionChain.findByPk(chain_id);
-    if (updatedChain && updatedChain.total_kpi !== null) {
-      await ChainKpi.update(
-        { target_value: updatedChain.total_kpi },
-        { where: { chain_id } }
-      );
     }
 
     res.json({
@@ -736,33 +514,17 @@ exports.completeTaskStep = async (req, res) => {
 exports.updateChain = async (req, res) => {
   try {
     const { chain_id } = req.params;
-    const { name, description, start_date, end_date, total_kpi, steps } = req.body;
+    const { name, description, steps } = req.body;
 
     const chain = await ProductionChain.findByPk(chain_id);
     if (!chain) {
       return res.status(404).json({ message: 'Chuỗi sản xuất không tồn tại' });
     }
 
-    // Validate dates and KPI
-    if (start_date && end_date) {
-      const startDate = new Date(start_date);
-      const endDate = new Date(end_date);
-      if (startDate >= endDate) {
-        return res.status(400).json({ message: 'Ngày kết thúc phải sau ngày bắt đầu' });
-      }
-    }
-
-    if (total_kpi !== undefined && total_kpi < 0) {
-      return res.status(400).json({ message: 'Mục tiêu KPI phải là số không âm' });
-    }
-
     // Update chain
     await chain.update({
       name: name || chain.name,
-      description: description !== undefined ? description : chain.description,
-      start_date: start_date ? new Date(start_date) : chain.start_date,
-      end_date: end_date ? new Date(end_date) : chain.end_date,
-      total_kpi: total_kpi !== undefined ? total_kpi : chain.total_kpi
+      description: description !== undefined ? description : chain.description
     });
 
     // Update steps if provided
@@ -846,26 +608,18 @@ exports.addFeedback = async (req, res) => {
       return res.status(404).json({ message: 'Chuỗi sản xuất không tồn tại' });
     }
 
-    // Update chain with feedback
-    await chain.update({
-      feedback: feedback.trim(),
-      feedback_by,
-      feedback_at: new Date()
+    // Create feedback record
+    const feedbackRecord = await ProductionChainFeedback.create({
+      chain_id,
+      message: feedback.trim(),
+      sender_id: feedback_by,
+      sender_role: 'admin'
     });
 
     res.json({
       message: 'Thêm phản hồi thành công',
-      chain: await ProductionChain.findByPk(chain_id, {
-        include: [
-          { model: User, as: 'creator' },
-          { model: User, as: 'feedbackUser', attributes: ['user_id', 'name', 'email'] },
-          {
-            model: ProductionChainStep,
-            as: 'steps',
-            include: [{ model: Department, as: 'department' }],
-            order: [['step_order', 'ASC']]
-          }
-        ]
+      feedback: await ProductionChainFeedback.findByPk(feedbackRecord.feedback_id, {
+        include: [{ model: User, as: 'sender', attributes: ['user_id', 'name', 'email'] }]
       })
     });
   } catch (err) {
@@ -880,7 +634,7 @@ exports.addFeedback = async (req, res) => {
 exports.updateChain = async (req, res) => {
   try {
     const { chain_id } = req.params;
-    const { name, description, start_date, end_date, total_kpi, steps } = req.body;
+    const { name, description, steps } = req.body;
 
     const chain = await ProductionChain.findByPk(chain_id);
     if (!chain) {
@@ -889,22 +643,6 @@ exports.updateChain = async (req, res) => {
 
     if (!name || !steps || !Array.isArray(steps) || steps.length === 0) {
       return res.status(400).json({ message: 'Tên và các bước là bắt buộc' });
-    }
-
-    // Validate dates and KPI
-    if (!start_date || !end_date) {
-      return res.status(400).json({ message: 'Ngày bắt đầu và kết thúc là bắt buộc' });
-    }
-
-    if (total_kpi === undefined || total_kpi < 0) {
-      return res.status(400).json({ message: 'Mục tiêu KPI phải là số không âm' });
-    }
-
-    const startDate = new Date(start_date);
-    const endDate = new Date(end_date);
-
-    if (startDate >= endDate) {
-      return res.status(400).json({ message: 'Ngày kết thúc phải sau ngày bắt đầu' });
     }
 
     // Validate steps
@@ -930,10 +668,7 @@ exports.updateChain = async (req, res) => {
     // Update chain
     await chain.update({
       name,
-      description,
-      start_date: startDate,
-      end_date: endDate,
-      total_kpi
+      description
     });
 
     // Delete existing steps
@@ -1093,24 +828,21 @@ exports.getChainKpis = async (req, res) => {
     const kpis = await ChainKpi.findAll({
       where: { chain_id },
       include: [
-        { model: User, as: 'creator', attributes: ['user_id', 'name'] },
-        { model: ProductionChain, as: 'chain', attributes: ['start_date', 'end_date'] }
+        { model: User, as: 'creator', attributes: ['user_id', 'name'] }
       ],
       order: [['year', 'DESC'], ['month', 'DESC']]
     });
 
-    // Add start_date and end_date from chain to each KPI and calculate distribution
+    // Calculate distribution for each KPI using its own dates
     const kpisWithDates = await Promise.all(kpis.map(async (kpi) => {
       const kpiData = kpi.toJSON();
-      kpiData.start_date = kpi.chain?.start_date;
-      kpiData.end_date = kpi.chain?.end_date;
       
       // Calculate KPI distribution if we have dates and no existing weeks
-      if (kpiData.chain?.start_date && kpiData.chain?.end_date) {
+      if (kpiData.start_date && kpiData.end_date) {
         // If KPI already has weeks data, use it; otherwise calculate distribution
         if (!kpiData.weeks || kpiData.weeks.length === 0) {
-          const startDateStr = kpiData.chain.start_date.toISOString().split('T')[0];
-          const endDateStr = kpiData.chain.end_date.toISOString().split('T')[0];
+          const startDateStr = kpiData.start_date.toISOString().split('T')[0];
+          const endDateStr = kpiData.end_date.toISOString().split('T')[0];
           const distribution = calculateKpiDistribution(
             kpiData.target_value, 
             startDateStr, 
@@ -1157,7 +889,7 @@ exports.getChainKpis = async (req, res) => {
 exports.createChainKpi = async (req, res) => {
   try {
     const { chain_id } = req.params;
-    const { year, month, target_value, unit_label, notes } = req.body;
+    const { year, month, target_value, start_date, end_date, unit_label, notes } = req.body;
     const created_by = req.user.user_id;
 
     if (!year || !month || target_value === undefined) {
@@ -1187,6 +919,8 @@ exports.createChainKpi = async (req, res) => {
       year,
       month,
       target_value,
+      start_date,
+      end_date,
       unit_label: unit_label || 'sản phẩm',
       notes,
       created_by
@@ -1238,20 +972,6 @@ exports.updateChainKpi = async (req, res) => {
       unit_label: unit_label || kpi.unit_label,
       notes: notes !== undefined ? notes : kpi.notes
     });
-
-    // If target_value was updated, sync total_kpi of the production chain
-    if (target_value !== undefined) {
-      await ProductionChain.update(
-        { total_kpi: target_value },
-        { where: { chain_id: kpi.chain_id } }
-      );
-
-      // Also sync target_value of all other KPIs in this chain
-      await ChainKpi.update(
-        { target_value },
-        { where: { chain_id: kpi.chain_id, chain_kpi_id: { [Op.ne]: kpi_id } } }
-      );
-    }
 
     res.json({
       message: 'Cập nhật KPI thành công',
@@ -1711,7 +1431,9 @@ exports.checkChainActivities = async (req, res) => {
 
 /**
  * Update production chain total KPI
+ * DEPRECATED: total_kpi field removed from ProductionChain
  */
+/*
 exports.updateChainTotalKpi = async (req, res) => {
   try {
     const { chain_id } = req.params;
@@ -1745,6 +1467,7 @@ exports.updateChainTotalKpi = async (req, res) => {
     res.status(500).json({ message: 'Lỗi server' });
   }
 };
+*/
 
 /**
  * Update chain KPI
