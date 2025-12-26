@@ -156,8 +156,6 @@ export const replyToFeedback = async (
 export interface ChainKpi {
   chain_kpi_id: number;
   chain_id: number;
-  year: number;
-  month: number;
   target_value: number;
   start_date?: string;
   end_date?: string;
@@ -205,8 +203,6 @@ export const getChainKpis = async (chain_id: number): Promise<ChainKpi[]> => {
 export const createChainKpi = async (
   chain_id: number,
   data: {
-    year: number;
-    month: number;
     target_value: number;
     start_date?: string;
     end_date?: string;

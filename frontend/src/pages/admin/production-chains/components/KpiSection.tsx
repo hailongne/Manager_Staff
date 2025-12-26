@@ -19,6 +19,7 @@ interface KpiSectionProps {
   onOpenKpiEditModal: () => void;
   onKpiCompletionUpdate?: () => void;
   onCreateNewKpi?: () => void;
+  onDeleteKpi?: (kpiId: number) => void;
 }
 
 export function KpiSection({
@@ -33,7 +34,8 @@ export function KpiSection({
   chainKpis = [],
   onOpenKpiEditModal,
   onKpiCompletionUpdate,
-  onCreateNewKpi
+  onCreateNewKpi,
+  onDeleteKpi
 }: KpiSectionProps) {
   const [localSelectedKpi, setLocalSelectedKpi] = useState<ChainKpi | null>(selectedKpi);
   const [selectedKpiId, setSelectedKpiId] = useState<string>('');
@@ -127,6 +129,8 @@ export function KpiSection({
           isAdmin={isAdmin}
           onCreateNewKpi={onCreateNewKpi}
           onOpenKpiEditModal={onOpenKpiEditModal}
+          onDeleteKpi={onDeleteKpi}
+          selectedKpiId={localSelectedKpi?.chain_kpi_id}
         />
       </div>
 
@@ -145,7 +149,7 @@ export function KpiSection({
       ) : (
         <p className="mt-3 text-xs text-sky-700">
           {hasKpis
-            ? `Tháng này chưa có KPI. Gần nhất: ${latestKpi?.month}/${latestKpi?.year} với chỉ tiêu ${latestKpi ? latestKpi.target_value : 0}.`
+            ? `Tháng này chưa có KPI. Gần nhất: ${latestKpi?.start_date ? new Date(latestKpi.start_date).toLocaleDateString('vi-VN') : 'N/A'} với chỉ tiêu ${latestKpi ? latestKpi.target_value : 0}.`
             : "Chuỗi chưa có KPI nào được ban hành."}
         </p>
       )}

@@ -15,14 +15,6 @@ const ChainKpi = sequelize.define('ChainKpi', {
       key: 'chain_id'
     }
   },
-  year: {
-    type: DataTypes.INTEGER,
-    allowNull: false
-  },
-  month: {
-    type: DataTypes.INTEGER,
-    allowNull: false
-  },
   target_value: {
     type: DataTypes.INTEGER,
     allowNull: false

@@ -16,7 +16,7 @@ export function KpiFilter({ chainKpis, selectedKpiId, onKpiFilterChange }: KpiFi
       <option value="">Chọn KPI</option>
       {chainKpis.map(kpi => (
         <option key={kpi.chain_kpi_id} value={kpi.chain_kpi_id?.toString()}>
-          {kpi.month}/{kpi.year} - {kpi.target_value} KPI
+          {kpi.start_date ? new Date(kpi.start_date).toLocaleDateString('vi-VN') : 'N/A'} - {kpi.target_value} KPI
         </option>
       ))}
     </select>

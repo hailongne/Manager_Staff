@@ -17,6 +17,7 @@ interface KpiManagementSectionProps {
   chainKpis?: ChainKpi[];
   onKpiCompletionUpdate?: () => void;
   onKpiUpdate?: () => void;
+  onDeleteKpi?: (kpiId: number) => void;
 }
 
 export function KpiManagementSection({
@@ -31,7 +32,8 @@ export function KpiManagementSection({
   userRole,
   chainKpis = [],
   onKpiCompletionUpdate,
-  onKpiUpdate
+  onKpiUpdate,
+  onDeleteKpi
 }: KpiManagementSectionProps) {
   const [showKpiEditModal, setShowKpiEditModal] = useState(false);
   const [showKpiCreateModal, setShowKpiCreateModal] = useState(false);
@@ -61,6 +63,7 @@ export function KpiManagementSection({
         onOpenKpiEditModal={handleOpenKpiEditModal}
         onKpiCompletionUpdate={onKpiCompletionUpdate}
         onCreateNewKpi={handleOpenKpiCreateModal}
+        onDeleteKpi={onDeleteKpi}
       />
 
       <KpiEditModal

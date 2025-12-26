@@ -28,8 +28,6 @@ export interface ChainFormProps {
 export interface ChainKpi {
   chain_kpi_id: number;
   chain_id: number;
-  year: number;
-  month: number;
   target_value: number;
   start_date?: string;
   end_date?: string;

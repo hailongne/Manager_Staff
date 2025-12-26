@@ -4,9 +4,11 @@ interface KpiActionsProps {
   isAdmin: boolean;
   onCreateNewKpi?: () => void;
   onOpenKpiEditModal: () => void;
+  onDeleteKpi?: (kpiId: number) => void;
+  selectedKpiId?: number;
 }
 
-export function KpiActions({ canEditKpi, hasKpi, isAdmin, onCreateNewKpi, onOpenKpiEditModal }: KpiActionsProps) {
+export function KpiActions({ canEditKpi, hasKpi, isAdmin, onCreateNewKpi, onOpenKpiEditModal, onDeleteKpi, selectedKpiId }: KpiActionsProps) {
   if (!canEditKpi) return null;
 
   return (
@@ -27,6 +29,15 @@ export function KpiActions({ canEditKpi, hasKpi, isAdmin, onCreateNewKpi, onOpen
           className="text-xs font-semibold text-sky-600 hover:text-sky-700"
         >
           Chỉnh sửa
+        </button>
+      )}
+      {hasKpi && isAdmin && onDeleteKpi && selectedKpiId && (
+        <button
+          type="button"
+          onClick={() => onDeleteKpi(selectedKpiId)}
+          className="text-xs font-semibold text-red-600 hover:text-red-700"
+        >
+          Xóa KPI
         </button>
       )}
     </div>

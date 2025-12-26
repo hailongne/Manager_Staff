@@ -830,7 +830,7 @@ exports.getChainKpis = async (req, res) => {
       include: [
         { model: User, as: 'creator', attributes: ['user_id', 'name'] }
       ],
-      order: [['year', 'DESC'], ['month', 'DESC']]
+      order: [['start_date', 'DESC']]
     });
 
     // Calculate distribution for each KPI using its own dates
@@ -889,11 +889,11 @@ exports.getChainKpis = async (req, res) => {
 exports.createChainKpi = async (req, res) => {
   try {
     const { chain_id } = req.params;
-    const { year, month, target_value, start_date, end_date, unit_label, notes } = req.body;
+    const { target_value, start_date, end_date, unit_label, notes } = req.body;
     const created_by = req.user.user_id;
 
-    if (!year || !month || target_value === undefined) {
-      return res.status(400).json({ message: 'Năm, tháng và mục tiêu KPI là bắt buộc' });
+    if (target_value === undefined || !start_date || !end_date) {
+      return res.status(400).json({ message: 'Mục tiêu KPI và khoảng thời gian là bắt buộc' });
     }
 
     if (target_value <= 0) {
@@ -905,19 +905,8 @@ exports.createChainKpi = async (req, res) => {
       return res.status(404).json({ message: 'Chuỗi sản xuất không tồn tại' });
     }
 
-    // Check if KPI already exists for this month/year
-    const existingKpi = await ChainKpi.findOne({
-      where: { chain_id, year, month }
-    });
-
-    if (existingKpi) {
-      return res.status(400).json({ message: 'KPI đã tồn tại cho tháng này' });
-    }
-
     const kpi = await ChainKpi.create({
       chain_id,
-      year,
-      month,
       target_value,
       start_date,
       end_date,
@@ -1505,5 +1494,30 @@ exports.updateChainKpi = async (req, res) => {
   } catch (err) {
     console.error('Update chain KPI error:', err);
     res.status(500).json({ message: 'Lỗi server', error: err.message });
+  }
+};
+
+/**
+ * Delete chain KPI
+ */
+exports.deleteChainKpi = async (req, res) => {
+  try {
+    const { kpi_id } = req.params;
+
+    const kpi = await ChainKpi.findByPk(kpi_id);
+    if (!kpi) {
+      return res.status(404).json({ message: 'KPI không tồn tại' });
+    }
+
+    // Delete associated completions first
+    await KpiCompletion.destroy({ where: { chain_kpi_id: kpi_id } });
+
+    // Delete the KPI
+    await kpi.destroy();
+
+    res.json({ message: 'Xóa KPI thành công' });
+  } catch (err) {
+    console.error('Delete chain KPI error:', err);
+    res.status(500).json({ message: 'Lỗi server' });
   }
 };

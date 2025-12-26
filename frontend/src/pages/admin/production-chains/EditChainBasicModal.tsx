@@ -75,7 +75,7 @@ export function EditChainBasicModal({ isOpen, onClose, onSuccess, chain, kpiComp
       const locked = !isAdmin || hasCompletedKpi();
       setEditPermission(locked ? 'LOCKED' : 'ALLOWED');
     }
-  }, [isOpen, chain, hasCompletedKpi]);
+  }, [isOpen, chain, hasCompletedKpi, user]);
 
   // Handle ESC key to close modal
   useEffect(() => {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { getProductionChains, deleteProductionChain, getChainFeedbacks, sendFeedbackMessage, replyToFeedback, getChainKpis, getKpiCompletions, disableProductionChain, getDisabledProductionChains, enableProductionChain } from "../../../api/productionChains";
+import { getProductionChains, deleteProductionChain, getChainFeedbacks, sendFeedbackMessage, replyToFeedback, getChainKpis, getKpiCompletions, disableProductionChain, getDisabledProductionChains, enableProductionChain, deleteChainKpi } from "../../../api/productionChains";
 import type { ProductionChain, ProductionChainStep, ProductionChainFeedback } from "../../../api/productionChains";
 import { useModalToast } from "../../../hooks/useToast";
 import { useAuth } from "../../../hooks/useAuth";
@@ -158,7 +158,7 @@ export default function ProductionChainsList() {
         for (const kpi of allKpis) {
           try {
             const completions = await getKpiCompletions(kpi.chain_kpi_id);
-            const key = `${kpi.chain_id}-${kpi.year}-${kpi.month}`;
+            const key = `${kpi.chain_kpi_id}`;
             
             const weeks: number[] = [];
             const days: string[] = [];
@@ -231,7 +231,7 @@ export default function ProductionChainsList() {
             .map(c => c.date_iso)
             .filter(Boolean) as string[];
           
-          const key = `${kpi.chain_id}-${kpi.year}-${kpi.month}`;
+          const key = `${kpi.chain_kpi_id}`;
           completionState[key] = { chain_id: kpi.chain_id, weeks, days };
         } catch (error) {
           console.error(`Lỗi tải completions cho KPI ${kpi.chain_kpi_id}:`, error);
@@ -276,6 +276,23 @@ export default function ProductionChainsList() {
       }
     } catch (error) {
       console.error("Lỗi tải KPIs:", error);
+    }
+  };
+
+  const handleDeleteKpi = async (kpiId: number) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa KPI này? Tất cả dữ liệu hoàn thành sẽ bị xóa vĩnh viễn.')) {
+      return;
+    }
+
+    try {
+      await deleteChainKpi(kpiId);
+      showSuccessToast('Xóa KPI thành công');
+      
+      // Reload KPIs
+      await handleKpiUpdate();
+    } catch (error) {
+      console.error('Lỗi xóa KPI:', error);
+      showErrorToast('Không thể xóa KPI. Vui lòng thử lại.');
     }
   };
 
@@ -518,8 +535,8 @@ export default function ProductionChainsList() {
               {(() => {
                 const chainKpisForThisChain = chainKpis.filter(kpi => kpi.chain_id === chain.chain_id && kpi.chain_id != null);
                 const latestKpi = chainKpisForThisChain.length > 0 ? chainKpisForThisChain.reduce((latest, current) => {
-                  const latestDate = new Date(latest.year, latest.month - 1);
-                  const currentDate = new Date(current.year, current.month - 1);
+                  const latestDate = latest.start_date ? new Date(latest.start_date) : new Date(0);
+                  const currentDate = current.start_date ? new Date(current.start_date) : new Date(0);
                   return currentDate > latestDate ? current : latest;
                 }) : null;
                 
@@ -529,14 +546,15 @@ export default function ProductionChainsList() {
                     selectedKpi={latestKpi}
                     latestKpi={latestKpi}
                     hasKpis={chainKpisForThisChain.length > 0}
-                    kpiSummaryMonth={latestKpi?.month || new Date().getMonth() + 1}
-                    kpiSummaryYear={latestKpi?.year || new Date().getFullYear()}
+                    kpiSummaryMonth={latestKpi?.start_date ? new Date(latestKpi.start_date).getMonth() + 1 : new Date().getMonth() + 1}
+                    kpiSummaryYear={latestKpi?.start_date ? new Date(latestKpi.start_date).getFullYear() : new Date().getFullYear()}
                     canCompleteKpi={canCompleteKpi}
                     canEditKpi={canEditKpi}
                     userRole={user?.role}
                     chainKpis={chainKpisForThisChain}
                     onKpiCompletionUpdate={handleKpiCompletionUpdate}
                     onKpiUpdate={handleKpiUpdate}
+                    onDeleteKpi={handleDeleteKpi}
                   />
                 );
               })()}
