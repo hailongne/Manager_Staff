@@ -1,13 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
-import { getProductionChains, deleteProductionChain, getChainFeedbacks, sendFeedbackMessage, replyToFeedback, getChainKpis, getKpiCompletions, disableProductionChain, getDisabledProductionChains, enableProductionChain, deleteChainKpi } from "../../../api/productionChains";
-import type { ProductionChain, ProductionChainStep, ProductionChainFeedback } from "../../../api/productionChains";
+import { getProductionChains, deleteProductionChain, getChainKpis, getKpiCompletions, disableProductionChain, getDisabledProductionChains, enableProductionChain, deleteChainKpi } from "../../../api/productionChains";
+import type { ProductionChain, ProductionChainStep } from "../../../api/productionChains";
 import { useModalToast } from "../../../hooks/useToast";
 import { useAuth } from "../../../hooks/useAuth";
 import { KpiManagementSection } from "./components/KpiManagementSection";
 import { EditChainBasicModal } from "./EditChainBasicModal";
 import { CreateChainForm } from "./CreateChainForm";
 import { TabNavigation } from "./components/TabNavigation";
-import { FeedbackModal } from "./components/FeedbackModal";
 import type { ChainKpi, KpiCompletionState } from "./types";
 
 type TabType = "list" | "disabled" | "create";
@@ -20,10 +19,6 @@ export default function ProductionChainsList() {
   const [loading, setLoading] = useState(true);
   const [disabledLoading, setDisabledLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("list");
-  const [selectedChain, setSelectedChain] = useState<ProductionChain | null>(null);
-  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [feedbacks, setFeedbacks] = useState<ProductionChainFeedback[]>([]);
-  const [newFeedbackMessage, setNewFeedbackMessage] = useState("");
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
@@ -132,13 +127,6 @@ export default function ProductionChainsList() {
     }
   }, [user, refreshUser]);
 
-  // Load KPIs when a chain is selected for details
-  useEffect(() => {
-    if (selectedChain?.chain_id) {
-      loadChainKpis(selectedChain.chain_id);
-    }
-  }, [selectedChain]);
-
   const loadChains = async () => {
     try {
       const data = await getProductionChains();
@@ -195,15 +183,6 @@ export default function ProductionChainsList() {
       showErrorToast("Không thể tải danh sách chuỗi đã vô hiệu hóa");
     } finally {
       setDisabledLoading(false);
-    }
-  };
-
-  const loadChainKpis = async (chainId: number) => {
-    try {
-      const kpis = await getChainKpis(chainId);
-      setChainKpis(kpis);
-    } catch (error) {
-      console.error("Lỗi tải KPIs:", error);
     }
   };
 
@@ -372,55 +351,6 @@ export default function ProductionChainsList() {
     }
   };
 
-  const handleAddFeedback = async (chain: ProductionChain) => {
-    if (!chain.chain_id) return;
-
-    setSelectedChain(chain);
-    setShowFeedbackModal(true);
-
-    // Load existing feedbacks
-    try {
-      const feedbackData = await getChainFeedbacks(chain.chain_id);
-      setFeedbacks(feedbackData);
-    } catch (error) {
-      console.error("Lỗi tải phản hồi:", error);
-    }
-  };
-
-  const handleSendFeedback = async () => {
-    if (!selectedChain?.chain_id || !newFeedbackMessage.trim()) return;
-
-    try {
-      if (isAdmin) {
-        await replyToFeedback(selectedChain.chain_id, newFeedbackMessage.trim());
-      } else {
-        await sendFeedbackMessage(selectedChain.chain_id, newFeedbackMessage.trim());
-      }
-
-      showSuccessToast("Gửi phản hồi thành công!");
-      setNewFeedbackMessage("");
-
-      // Reload feedbacks
-      const feedbackData = await getChainFeedbacks(selectedChain.chain_id);
-      setFeedbacks(feedbackData);
-    } catch (error: unknown) {
-      console.error("Lỗi gửi phản hồi:", error);
-      let errorMessage = "Lỗi gửi phản hồi";
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as { response?: { data?: { message?: string } } };
-        errorMessage = axiosError.response?.data?.message || errorMessage;
-      }
-      showErrorToast(errorMessage);
-    }
-  };
-
-  const handleCloseFeedbackModal = () => {
-    setShowFeedbackModal(false);
-    setSelectedChain(null);
-    setFeedbacks([]);
-    setNewFeedbackMessage("");
-  };
-
   const handleTabChange = (tab: TabType, loadDisabled = false) => {
     setActiveTab(tab);
     if (loadDisabled) {
@@ -487,24 +417,30 @@ export default function ProductionChainsList() {
                 <div className="flex gap-3 ml-4">
                   {isAdmin && (
                     <>
-                      <button
+                        <button
                         onClick={() => handleEditChain(chain)}
+                        title="Chỉnh sửa chuỗi sản xuất"
                         className="inline-flex items-center gap-2 px-2 py-2 rounded-lg text-yellow-600 hover:text-yellow-500"
-                      >
-                        Chỉnh sửa
-                      </button>
-                      <button
+                        >
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        </button>
+                        <button
                         onClick={() => handleDeleteChain(chain)}
+                        title="Xóa hoặc vô hiệu hóa chuỗi sản xuất"
                         className="inline-flex items-center gap-2 px-2 py-2 rounded-lg text-red-600 hover:text-red-500"
-                      >
-                        Xóa chuỗi
-                      </button>
+                        >
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        </button>
                     </>
                   )}
                   {isManager() && !isAdmin && (
                     <button
-                      onClick={() => handleAddFeedback(chain)}
-                      className="inline-flex items-center gap-2 px-2 py-2 rounded-lg border border-purple-200 text-purple-600 hover:bg-purple-100"
+                      disabled
+                      className="inline-flex items-center gap-2 px-2 py-2 rounded-lg border border-purple-200 text-purple-400 cursor-not-allowed"
                     >
                       💬 Phản hồi
                     </button>
@@ -516,7 +452,7 @@ export default function ProductionChainsList() {
                 <div className="flex flex-wrap gap-2">
                   {chain.steps?.sort((a, b) => a.step_order - b.step_order).map((step: ProductionChainStep, index: number) => (
                     <div key={step.step_id} className="flex items-center">
-                      <div className="bg-pink-100 text-pink-700 px-3 py-1 rounded-full text-sm font-medium text-center">
+                      <div className="bg-pink-100 text-pink-700 px-3 py-1 rounded-xl text-sm font-medium text-center">
                         {step.step_order}. {step.department?.name}
                         <p className="text-xs text-gray-500">
                           {step.title}
@@ -728,16 +664,6 @@ export default function ProductionChainsList() {
         }}
         chain={editingChain}
         kpiCompletionState={kpiCompletionState}
-      />
-
-      {/* Feedback Modal */}
-      <FeedbackModal
-        isOpen={showFeedbackModal}
-        chain={selectedChain}
-        feedbacks={feedbacks}
-        onClose={handleCloseFeedbackModal}
-        onSendMessage={handleSendFeedback}
-        isAdmin={isAdmin}
       />
 
     </div>

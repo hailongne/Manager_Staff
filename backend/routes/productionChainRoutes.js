@@ -1,8 +1,3 @@
-/**
- * Production Chain Routes
- * RESTful API for production chain management
- */
-
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/authMiddleware');
@@ -24,11 +19,6 @@ router.post('/:chain_id/start', authorize('admin'), productionChainController.st
 router.get('/', authorize(['admin', 'leader']), productionChainController.getChains);
 router.get('/disabled', authorize(['admin', 'leader']), productionChainController.getDisabledChains);
 router.get('/:chain_id/activities', authorize(['admin', 'leader']), productionChainController.checkChainActivities);
-
-// Feedback routes
-router.get('/:chain_id/feedbacks', authorize(['admin', 'leader']), productionChainController.getFeedbacks);
-router.post('/:chain_id/feedback', authorize('leader'), productionChainController.addFeedbackMessage);
-router.post('/:chain_id/reply', authorize('admin'), productionChainController.replyFeedback);
 
 // Complete task step (any user can complete their task)
 router.post('/task/:task_id/complete', productionChainController.completeTaskStep);

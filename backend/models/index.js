@@ -1,8 +1,3 @@
-/**
- * Models Index
- * Central export point for all Sequelize models
- */
-
 // Core models
 const User = require('./User');
 const Department = require('./Department');
@@ -10,7 +5,6 @@ const Department = require('./Department');
 // Production Chain
 const ProductionChain = require('./ProductionChain');
 const ProductionChainStep = require('./ProductionChainStep');
-const ProductionChainFeedback = require('./ProductionChainFeedback');
 const ChainKpi = require('./ChainKpi');
 const KpiCompletion = require('./KpiCompletion');
 
@@ -29,7 +23,6 @@ const models = {
   Department,
   ProductionChain,
   ProductionChainStep,
-  ProductionChainFeedback,
   ChainKpi,
   KpiCompletion,
   Timesheet,

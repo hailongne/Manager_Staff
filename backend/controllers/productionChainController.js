@@ -3,7 +3,7 @@
  * API for managing production chains and steps
  */
 
-const { ProductionChain, ProductionChainStep, ProductionChainFeedback, ChainKpi, KpiCompletion, Department, User } = require('../models');
+const { ProductionChain, ProductionChainStep, ChainKpi, KpiCompletion, Department, User } = require('../models');
 const { HTTP_STATUS } = require('../utils/constants');
 const { Op } = require('sequelize');
 const { calculateKpiDistribution } = require('../utils/kpiHelpers');
@@ -700,115 +700,6 @@ exports.updateChain = async (req, res) => {
     });
   } catch (err) {
     console.error('Update chain error:', err);
-    res.status(500).json({ message: 'Lỗi server' });
-  }
-};
-
-/**
- * Get feedback conversation for a chain
- */
-exports.getFeedbacks = async (req, res) => {
-  try {
-    const { chain_id } = req.params;
-
-    const chain = await ProductionChain.findByPk(chain_id);
-    if (!chain) {
-      return res.status(404).json({ message: 'Chuỗi sản xuất không tồn tại' });
-    }
-
-    const feedbacks = await ProductionChainFeedback.findAll({
-      where: { chain_id },
-      include: [{ model: User, as: 'sender', attributes: ['user_id', 'name', 'email'] }],
-      order: [['created_at', 'ASC']]
-    });
-
-    res.json(feedbacks);
-  } catch (err) {
-    console.error('Get feedbacks error:', err);
-    res.status(500).json({ message: 'Lỗi server' });
-  }
-};
-
-/**
- * Add feedback message (Leader only)
- */
-exports.addFeedbackMessage = async (req, res) => {
-  try {
-    const { chain_id } = req.params;
-    const { message } = req.body;
-    const sender_id = req.user.user_id;
-
-    if (!message || message.trim().length === 0) {
-      return res.status(400).json({ message: 'Nội dung phản hồi là bắt buộc' });
-    }
-
-    const chain = await ProductionChain.findByPk(chain_id);
-    if (!chain) {
-      return res.status(404).json({ message: 'Chuỗi sản xuất không tồn tại' });
-    }
-
-    // Check if user is leader
-    if (req.user.role !== 'leader') {
-      return res.status(403).json({ message: 'Chỉ trưởng nhóm mới có thể gửi phản hồi' });
-    }
-
-    const feedback = await ProductionChainFeedback.create({
-      chain_id,
-      message: message.trim(),
-      sender_id,
-      sender_role: 'leader'
-    });
-
-    res.status(201).json({
-      message: 'Gửi phản hồi thành công',
-      feedback: await ProductionChainFeedback.findByPk(feedback.feedback_id, {
-        include: [{ model: User, as: 'sender', attributes: ['user_id', 'name', 'email'] }]
-      })
-    });
-  } catch (err) {
-    console.error('Add feedback message error:', err);
-    res.status(500).json({ message: 'Lỗi server' });
-  }
-};
-
-/**
- * Reply to feedback (Admin only)
- */
-exports.replyFeedback = async (req, res) => {
-  try {
-    const { chain_id } = req.params;
-    const { message } = req.body;
-    const sender_id = req.user.user_id;
-
-    if (!message || message.trim().length === 0) {
-      return res.status(400).json({ message: 'Nội dung trả lời là bắt buộc' });
-    }
-
-    const chain = await ProductionChain.findByPk(chain_id);
-    if (!chain) {
-      return res.status(404).json({ message: 'Chuỗi sản xuất không tồn tại' });
-    }
-
-    // Check if user is admin
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Chỉ quản trị viên mới có thể trả lời phản hồi' });
-    }
-
-    const feedback = await ProductionChainFeedback.create({
-      chain_id,
-      message: message.trim(),
-      sender_id,
-      sender_role: 'admin'
-    });
-
-    res.status(201).json({
-      message: 'Trả lời phản hồi thành công',
-      feedback: await ProductionChainFeedback.findByPk(feedback.feedback_id, {
-        include: [{ model: User, as: 'sender', attributes: ['user_id', 'name', 'email'] }]
-      })
-    });
-  } catch (err) {
-    console.error('Reply feedback error:', err);
     res.status(500).json({ message: 'Lỗi server' });
   }
 };

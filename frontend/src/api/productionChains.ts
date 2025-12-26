@@ -1,20 +1,6 @@
 // API chuỗi sản xuất
 import api from "./axios";
 
-export interface ProductionChainFeedback {
-  feedback_id: number;
-  chain_id: number;
-  message: string;
-  sender_id: number;
-  sender_role: 'leader' | 'admin';
-  created_at: string;
-  sender?: {
-    user_id: number;
-    name: string;
-    email: string;
-  };
-}
-
 export interface ProductionChainStep {
   step_id?: number;
   chain_id?: number;
@@ -43,11 +29,6 @@ export interface ProductionChain {
   creator?: {
     user_id: number;
     name: string;
-  };
-  feedbackUser?: {
-    user_id: number;
-    name: string;
-    email: string;
   };
 }
 
@@ -117,39 +98,6 @@ export const updateProductionChain = async (
 ): Promise<ProductionChain> => {
   const { data: response } = await api.put(`/production-chains/${chain_id}`, data);
   return response.chain;
-};
-
-// Thêm phản hồi cho chuỗi sản xuất (Manager only)
-export const addFeedback = async (
-  chain_id: number,
-  feedback: string
-): Promise<ProductionChainFeedback> => {
-  const { data: response } = await api.post(`/production-chains/${chain_id}/feedback`, { feedback });
-  return response.feedback;
-};
-
-// Lấy danh sách phản hồi của chuỗi
-export const getChainFeedbacks = async (chain_id: number): Promise<ProductionChainFeedback[]> => {
-  const { data } = await api.get(`/production-chains/${chain_id}/feedbacks`);
-  return data;
-};
-
-// Gửi phản hồi mới (Leader only)
-export const sendFeedbackMessage = async (
-  chain_id: number,
-  message: string
-): Promise<ProductionChainFeedback> => {
-  const { data: response } = await api.post(`/production-chains/${chain_id}/feedback`, { message });
-  return response.feedback;
-};
-
-// Trả lời phản hồi (Admin only)
-export const replyToFeedback = async (
-  chain_id: number,
-  message: string
-): Promise<ProductionChainFeedback> => {
-  const { data: response } = await api.post(`/production-chains/${chain_id}/reply`, { message });
-  return response.feedback;
 };
 
 // KPI APIs
