@@ -31,7 +31,7 @@ const KpiCompletion = sequelize.define('KpiCompletion', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'user',
+      model: 'users',
       key: 'user_id'
     }
   },

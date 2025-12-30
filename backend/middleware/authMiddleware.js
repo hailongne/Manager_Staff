@@ -12,7 +12,8 @@ module.exports = async function (req, res, next) {
     // Fetch the full user data from database to ensure we have latest department_position
     const user = await User.findByPk(verified.user_id);
     if (!user) {
-      return res.status(401).json({ message: 'User not found' });
+      console.log('User from JWT not found in database:', verified.user_id);
+      return res.status(401).json({ message: 'Người dùng không tồn tại, vui lòng đăng nhập lại' });
     }
 
     req.user = {

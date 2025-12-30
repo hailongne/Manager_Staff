@@ -25,19 +25,14 @@ const getWeekIndex = (date) => {
 };
 
 const getWorkingDaysInWeek = (kpi, weekIndex) => {
-  const days = [];
-  const weekStart = new Date(weekIndex);
-  for (let i = 0; i < 7; i++) {
-    const date = new Date(weekStart);
-    date.setDate(weekStart.getDate() + i);
-    if (date.getMonth() + 1 === kpi.month && date.getFullYear() === kpi.year) {
-      const dayOfWeek = date.getDay();
-      if (dayOfWeek >= 1 && dayOfWeek <= 5) { // Monday to Friday
-        days.push(createDateKey(date));
-      }
-    }
-  }
-  return days;
+  if (!kpi.weeks) return [];
+
+  const week = kpi.weeks.find(w => w.week_index === weekIndex);
+  if (!week) return [];
+
+  return week.days
+    .filter(day => day.is_working_day)
+    .map(day => day.date);
 };
 
 /**
@@ -1117,19 +1112,48 @@ exports.toggleWeekCompletion = async (req, res) => {
  * Toggle day completion
  */
 exports.toggleDayCompletion = async (req, res) => {
+  console.log('toggleDayCompletion called with:', req.params);
   try {
     const { kpi_id, date_iso } = req.params;
-    const completed_by = req.user.user_id;
+    const completed_by = req.user?.user_id;
 
+    if (!completed_by) {
+      console.log('No user found in request');
+      return res.status(401).json({ message: 'Người dùng chưa đăng nhập' });
+    }
+
+    console.log('completed_by from req.user.user_id:', completed_by, 'type:', typeof completed_by);
+
+    console.log('Looking for KPI:', kpi_id);
     const kpi = await ChainKpi.findByPk(kpi_id);
     if (!kpi) {
+      console.log('KPI not found:', kpi_id);
       return res.status(404).json({ message: 'KPI không tồn tại' });
+    }
+
+    console.log('KPI found, weeks data:', !!kpi.weeks);
+
+    // Validate inputs
+    const kpiIdNum = parseInt(kpi_id);
+    const userIdNum = parseInt(completed_by);
+
+    if (isNaN(kpiIdNum) || kpiIdNum <= 0) {
+      return res.status(400).json({ message: 'ID KPI không hợp lệ' });
+    }
+
+    if (isNaN(userIdNum) || userIdNum <= 0) {
+      return res.status(400).json({ message: 'ID người dùng không hợp lệ' });
+    }
+
+    // Validate date format
+    if (!date_iso || !/^\d{4}-\d{2}-\d{2}$/.test(date_iso)) {
+      return res.status(400).json({ message: 'Định dạng ngày không hợp lệ (yyyy-mm-dd)' });
     }
 
     // Check if completion already exists
     const existingCompletion = await KpiCompletion.findOne({
       where: {
-        chain_kpi_id: kpi_id,
+        chain_kpi_id: kpiIdNum,
         completion_type: 'day',
         date_iso
       }
@@ -1137,54 +1161,85 @@ exports.toggleDayCompletion = async (req, res) => {
 
     let isCompleted = false;
     if (existingCompletion) {
+      console.log('Removing existing completion');
       // Remove completion
       await existingCompletion.destroy();
       res.json({ message: 'Hủy hoàn thành ngày thành công' });
     } else {
+      console.log('Creating new completion for kpi_id:', kpiIdNum, 'date:', date_iso, 'user:', userIdNum);
       // Add completion
       await KpiCompletion.create({
-        chain_kpi_id: kpi_id,
+        chain_kpi_id: kpiIdNum,
         completion_type: 'day',
         date_iso,
-        completed_by
+        completed_by: userIdNum
       });
       isCompleted = true;
       res.json({ message: 'Đánh dấu hoàn thành ngày thành công' });
     }
 
     // Auto-manage week completion
-    const date = new Date(date_iso);
-    const weekIndex = getWeekIndex(date);
+    const targetDate = new Date(date_iso);
+    let weekIndex = null;
+    if (kpi.weeks && Array.isArray(kpi.weeks)) {
+      for (const week of kpi.weeks) {
+        if (week && week.start_date && week.end_date) {
+          const weekStart = new Date(week.start_date);
+          const weekEnd = new Date(week.end_date);
+          if (targetDate >= weekStart && targetDate <= weekEnd) {
+            weekIndex = week.week_index;
+            break;
+          }
+        }
+      }
+    }
+
+    if (weekIndex === null) {
+      // Date not found in any week, skip week completion logic
+      return;
+    }
+
     const workingDays = getWorkingDaysInWeek(kpi, weekIndex);
+    console.log('Working days for week', weekIndex, ':', workingDays);
+
+    if (workingDays.length === 0) {
+      console.log('No working days found, skipping week completion logic');
+      return;
+    }
 
     // Check if all working days in the week are completed
     const completedDays = await KpiCompletion.findAll({
       where: {
-        chain_kpi_id: kpi_id,
+        chain_kpi_id: kpiIdNum,
         completion_type: 'day',
         date_iso: workingDays
       }
     });
+    console.log('Completed days count:', completedDays.length, 'out of', workingDays.length);
+
     const allWorkingDaysCompleted = workingDays.length > 0 && completedDays.length === workingDays.length;
 
     // Check if week completion exists
     const weekCompletion = await KpiCompletion.findOne({
       where: {
-        chain_kpi_id: kpi_id,
+        chain_kpi_id: kpiIdNum,
         completion_type: 'week',
         week_index: weekIndex
       }
     });
+    console.log('Week completion exists:', !!weekCompletion);
 
     if (allWorkingDaysCompleted && !weekCompletion) {
+      console.log('Auto-completing week', weekIndex);
       // Auto-complete week
       await KpiCompletion.create({
-        chain_kpi_id: kpi_id,
+        chain_kpi_id: kpiIdNum,
         completion_type: 'week',
         week_index: weekIndex,
-        completed_by
+        completed_by: userIdNum
       });
     } else if (!allWorkingDaysCompleted && weekCompletion) {
+      console.log('Auto-uncompleting week', weekIndex);
       // Auto-uncomplete week
       await weekCompletion.destroy();
     }

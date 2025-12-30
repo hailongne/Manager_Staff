@@ -65,25 +65,37 @@ exports.login = async (req, res) => {
     }
 
     console.log('User found:', user.user_id);
+    console.log('Comparing passwords');
     const isMatch = await bcrypt.compare(password, user.password);
+    console.log('Password match result:', isMatch);
     if (!isMatch) {
       console.log('Password mismatch');
       return res.status(400).json({ message: "Sai mật khẩu" });
     }
 
-    console.log('Password match, generating token');
+    console.log('Generating token');
     const token = jwt.sign(
       { user_id: user.user_id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
+    console.log('Token generated');
 
     console.log('Login successful');
+    let mappedUser;
+    try {
+      mappedUser = mapUser(user);
+      console.log('User mapped successfully');
+    } catch (mapError) {
+      console.error('Error mapping user:', mapError);
+      throw mapError;
+    }
     res.json({
       message: "Đăng nhập thành công",
       token,
-      user: mapUser(user)
+      user: mappedUser
     });
+    console.log('Response sent');
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ message: "Server error" });

@@ -16,6 +16,9 @@ const Timesheet = require('./Timesheet');
 const Notification = require('./Notification');
 const ProfileUpdateRequest = require('./ProfileUpdateRequest');
 
+// Daily Tasks
+const DailyTask = require('./DailyTask');
+
 // Setup associations
 const setupAssociations = require('./associations');
 
@@ -29,7 +32,8 @@ const models = {
   KpiCompletion,
   Timesheet,
   Notification,
-  ProfileUpdateRequest
+  ProfileUpdateRequest,
+  DailyTask
 };
 
 // Initialize associations

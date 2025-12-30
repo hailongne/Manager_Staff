@@ -26,7 +26,7 @@ export default function Layout() {
         {/* Menu chính */}
         <nav className="flex flex-col gap-3 text-xm font-medium">
           <SidebarItem to="/dashboard">Tổng quan</SidebarItem>
-          <SidebarItem to="/tasks">Nhiệm vụ & Hằng ngày</SidebarItem>
+          <SidebarItem to="/daily-tasks">Nhiệm vụ & Hằng ngày</SidebarItem>
           <SidebarItem to="/reports">Báo cáo</SidebarItem>
           {user?.role === "user" && (
             <SidebarItem to="/profile">Hồ sơ</SidebarItem>

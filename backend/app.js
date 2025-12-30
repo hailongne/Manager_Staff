@@ -1,6 +1,15 @@
 const express = require('express');
 require('dotenv').config();
 
+// Add error handlers for debugging
+process.on('unhandledRejection', err => {
+  console.error('UNHANDLED REJECTION', err);
+});
+
+process.on('uncaughtException', err => {
+  console.error('UNCAUGHT EXCEPTION', err);
+});
+
 const app = express();
 const sequelize = require('./config/db');
 const { port } = require('./config/app');
@@ -17,6 +26,7 @@ const profileUpdateRoutes = require('./routes/profileUpdateRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const departmentRoutes = require('./routes/departmentRoutes');
 const productionChainRoutes = require('./routes/productionChainRoutes');
+const dailyTaskRoutes = require('./routes/dailyTaskRoutes');
 
 // ============= MIDDLEWARE =============
 app.use(express.json());
@@ -42,6 +52,9 @@ app.use('/api/departments', departmentRoutes);
 
 // Production Chains
 app.use('/api/production-chains', productionChainRoutes);
+
+// Daily Tasks
+app.use('/api/daily-tasks', dailyTaskRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

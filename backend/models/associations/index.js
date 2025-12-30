@@ -14,7 +14,8 @@ const setupAssociations = (models) => {
     KpiCompletion,
     Timesheet,
     Notification,
-    ProfileUpdateRequest
+    ProfileUpdateRequest,
+    DailyTask
   } = models;
 
   // ============================================
@@ -77,6 +78,23 @@ const setupAssociations = (models) => {
 
   ProductionChainFeedback.belongsTo(User, { foreignKey: 'user_id', as: 'author' });
   User.hasMany(ProductionChainFeedback, { foreignKey: 'user_id', as: 'feedbacks' });
+
+  // ============================================
+  // Daily Tasks
+  // ============================================
+  User.hasMany(DailyTask, { foreignKey: 'assigned_by', as: 'assignedTasks' });
+  User.hasMany(DailyTask, { foreignKey: 'assigned_to', as: 'receivedTasks' });
+  DailyTask.belongsTo(User, { foreignKey: 'assigned_by', as: 'assigner' });
+  DailyTask.belongsTo(User, { foreignKey: 'assigned_to', as: 'assignee' });
+
+  Department.hasMany(DailyTask, { foreignKey: 'department_id' });
+  DailyTask.belongsTo(Department, { foreignKey: 'department_id', as: 'department' });
+
+  ProductionChainStep.hasMany(DailyTask, { foreignKey: 'related_step_id', as: 'dailyTasks' });
+  DailyTask.belongsTo(ProductionChainStep, { foreignKey: 'related_step_id', as: 'relatedStep' });
+
+  KpiCompletion.hasMany(DailyTask, { foreignKey: 'related_kpi_task_id', as: 'dailyTasks' });
+  DailyTask.belongsTo(KpiCompletion, { foreignKey: 'related_kpi_task_id', as: 'relatedKpiTask' });
 
 };
 
