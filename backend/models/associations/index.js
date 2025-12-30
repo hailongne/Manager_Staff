@@ -9,6 +9,7 @@ const setupAssociations = (models) => {
     Department,
     ProductionChain,
     ProductionChainStep,
+    ProductionChainFeedback,
     ChainKpi,
     KpiCompletion,
     Timesheet,
@@ -69,6 +70,13 @@ const setupAssociations = (models) => {
 
   KpiCompletion.belongsTo(User, { foreignKey: 'completed_by', as: 'completedBy' });
   User.hasMany(KpiCompletion, { foreignKey: 'completed_by' });
+
+  // Production Chain Feedback
+  ProductionChainFeedback.belongsTo(KpiCompletion, { foreignKey: 'assignment_id', as: 'assignment' });
+  KpiCompletion.hasMany(ProductionChainFeedback, { foreignKey: 'assignment_id', as: 'feedbacks' });
+
+  ProductionChainFeedback.belongsTo(User, { foreignKey: 'user_id', as: 'author' });
+  User.hasMany(ProductionChainFeedback, { foreignKey: 'user_id', as: 'feedbacks' });
 
 };
 

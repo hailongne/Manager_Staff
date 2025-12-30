@@ -92,30 +92,6 @@ export default function ProductionChainsList() {
   console.log('ChainsList user:', user);
   console.log('ChainsList userRole:', user?.role);
 
-  // Helper function to check if user is manager
-  const isManager = () => {
-    if (user?.role === 'admin' || user?.role === 'leader') return true;
-    if (!user?.department_position) return false;
-
-    const managerKeywords = [
-      'truong ban',
-      'truong phong',
-      'truong bo phan',
-      'truong nhom',
-      'nhom truong',
-      'head',
-      'manager',
-      'director'
-    ];
-
-    const normalized = user.department_position
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase();
-
-    return managerKeywords.some(keyword => normalized.includes(keyword));
-  };
-
   useEffect(() => {
     loadChains();
   }, []);
@@ -420,30 +396,18 @@ export default function ProductionChainsList() {
                         <button
                         onClick={() => handleEditChain(chain)}
                         title="Chỉnh sửa chuỗi sản xuất"
-                        className="inline-flex items-center gap-2 px-2 py-2 rounded-lg text-yellow-600 hover:text-yellow-500"
+                        className="inline-flex items-center gap-2 px-2 py-2 rounded-lg text-yellow-600 hover:text-gray-500"
                         >
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
+                        Chỉnh Sửa
                         </button>
                         <button
                         onClick={() => handleDeleteChain(chain)}
                         title="Xóa hoặc vô hiệu hóa chuỗi sản xuất"
                         className="inline-flex items-center gap-2 px-2 py-2 rounded-lg text-red-600 hover:text-red-500"
                         >
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
+                        Xóa Chuỗi
                         </button>
                     </>
-                  )}
-                  {isManager() && !isAdmin && (
-                    <button
-                      disabled
-                      className="inline-flex items-center gap-2 px-2 py-2 rounded-lg border border-purple-200 text-purple-400 cursor-not-allowed"
-                    >
-                      💬 Phản hồi
-                    </button>
                   )}
                 </div>
               </div>

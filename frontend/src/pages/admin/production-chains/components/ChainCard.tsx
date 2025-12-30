@@ -5,11 +5,9 @@ interface ChainCardProps {
   isDisabled?: boolean;
   onEdit?: (chain: ProductionChain) => void;
   onEnable?: (chain: ProductionChain) => void;
-  onFeedback?: (chain: ProductionChain) => void;
   onDelete?: (chain: ProductionChain) => void;
   canEdit?: boolean;
   canEnable?: boolean;
-  canFeedback?: boolean;
   canDelete?: boolean;
 }
 
@@ -18,11 +16,9 @@ export function ChainCard({
   isDisabled = false,
   onEdit,
   onEnable,
-  onFeedback,
   onDelete,
   canEdit = false,
   canEnable = false,
-  canFeedback = false,
   canDelete = false
 }: ChainCardProps) {
   return (
@@ -40,14 +36,6 @@ export function ChainCard({
           </div>
         </div>
         <div className="flex gap-3 ml-4">
-          {canFeedback && onFeedback && (
-            <button
-              onClick={() => onFeedback(chain)}
-              className="inline-flex items-center text-blue-600 px-3 py-2 text-sm leading-4 font-medium rounded-md hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Phản hồi
-            </button>
-          )}
           {canEdit && onEdit && (
             <button
               onClick={() => onEdit(chain)}

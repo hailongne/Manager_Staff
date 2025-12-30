@@ -9,11 +9,9 @@ interface ChainListProps {
   onSearchChange: (term: string) => void;
   onEditChain?: (chain: ProductionChain) => void;
   onEnableChain?: (chain: ProductionChain) => void;
-  onFeedback?: (chain: ProductionChain) => void;
   onDeleteChain?: (chain: ProductionChain) => void;
   canEdit?: boolean;
   canEnable?: boolean;
-  canFeedback?: boolean;
   canDelete?: boolean;
   emptyMessage?: string;
 }
@@ -26,11 +24,9 @@ export function ChainList({
   onSearchChange,
   onEditChain,
   onEnableChain,
-  onFeedback,
   onDeleteChain,
   canEdit = false,
   canEnable = false,
-  canFeedback = false,
   canDelete = false,
   emptyMessage = "Không có chuỗi sản xuất nào."
 }: ChainListProps) {
@@ -77,11 +73,9 @@ export function ChainList({
               isDisabled={isDisabled}
               onEdit={onEditChain}
               onEnable={onEnableChain}
-              onFeedback={onFeedback}
               onDelete={onDeleteChain}
               canEdit={canEdit}
               canEnable={canEnable}
-              canFeedback={canFeedback}
               canDelete={canDelete}
             />
           ))}

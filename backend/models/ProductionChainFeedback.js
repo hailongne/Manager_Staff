@@ -7,35 +7,33 @@ const ProductionChainFeedback = sequelize.define('ProductionChainFeedback', {
     autoIncrement: true,
     primaryKey: true
   },
-  chain_id: {
+  assignment_id: {
     type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'production_chains',
-      key: 'chain_id'
-    }
+    allowNull: false
+  },
+  user_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false
   },
   message: {
     type: DataTypes.TEXT,
     allowNull: false
   },
-  sender_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'user',
-      key: 'user_id'
-    }
+  status: {
+    type: DataTypes.ENUM('pending', 'approved', 'rejected'),
+    defaultValue: 'pending'
   },
-  sender_role: {
-    type: DataTypes.ENUM('leader', 'admin'),
-    allowNull: false
+  created_at: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
+  },
+  updated_at: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
   }
 }, {
   tableName: 'production_chain_feedbacks',
-  timestamps: true,
-  createdAt: 'created_at',
-  updatedAt: 'updated_at'
+  timestamps: false
 });
 
 module.exports = ProductionChainFeedback;

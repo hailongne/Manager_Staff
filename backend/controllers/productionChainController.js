@@ -271,7 +271,6 @@ exports.deleteChain = async (req, res) => {
 
     // Delete associated data
     await ProductionChainStep.destroy({ where: { chain_id } });
-    await ProductionChainFeedback.destroy({ where: { chain_id } });
     await Task.destroy({ where: { chain_id } });
     await ChainKpi.destroy({ where: { chain_id } });
 
@@ -586,44 +585,6 @@ exports.deleteChain = async (req, res) => {
     res.json({ message: 'Xóa chuỗi sản xuất thành công' });
   } catch (err) {
     console.error('Delete chain error:', err);
-    res.status(500).json({ message: 'Lỗi server' });
-  }
-};
-
-/**
- * Add feedback to production chain (Manager only)
- */
-exports.addFeedback = async (req, res) => {
-  try {
-    const { chain_id } = req.params;
-    const { feedback } = req.body;
-    const feedback_by = req.user.user_id;
-
-    if (!feedback || feedback.trim().length === 0) {
-      return res.status(400).json({ message: 'Nội dung phản hồi là bắt buộc' });
-    }
-
-    const chain = await ProductionChain.findByPk(chain_id);
-    if (!chain) {
-      return res.status(404).json({ message: 'Chuỗi sản xuất không tồn tại' });
-    }
-
-    // Create feedback record
-    const feedbackRecord = await ProductionChainFeedback.create({
-      chain_id,
-      message: feedback.trim(),
-      sender_id: feedback_by,
-      sender_role: 'admin'
-    });
-
-    res.json({
-      message: 'Thêm phản hồi thành công',
-      feedback: await ProductionChainFeedback.findByPk(feedbackRecord.feedback_id, {
-        include: [{ model: User, as: 'sender', attributes: ['user_id', 'name', 'email'] }]
-      })
-    });
-  } catch (err) {
-    console.error('Add feedback error:', err);
     res.status(500).json({ message: 'Lỗi server' });
   }
 };
