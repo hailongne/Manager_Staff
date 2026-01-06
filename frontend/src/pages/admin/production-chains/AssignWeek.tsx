@@ -118,6 +118,14 @@ export default function AssignWeek() {
 
   const currentKpi = kpis.find(k => k.chain_kpi_id === (kpiId ?? selectedKpiId)) ?? null;
 
+  const visibleChains = currentUser?.role === 'leader'
+    ? chains.filter(c => (c.steps || []).some(s => s.department_id === currentUser.department_id))
+    : chains;
+
+  const leaderDeptName = currentUser?.role === 'leader'
+    ? currentUser?.department ?? null
+    : null;
+
   // NOTE: intentionally not re-loading previous assignments here to avoid
   // re-applying old data and causing assignment conflicts.
 
@@ -248,19 +256,7 @@ export default function AssignWeek() {
           displayDays.forEach((d) => {
             dayAssignedTotalsAll[d.date] = saved.reduce((acc, sa) => acc + ((sa.day_assignments && sa.day_assignments[d.date]) || 0), 0);
           });
-
-          const weekTotal = displayDays.reduce((a: number, dd) => a + Number(dd.target_value || 0), 0);
-          const weekAssignedAll = Object.values(dayAssignedTotalsAll).reduce((a, b) => a + (b || 0), 0);
-          const weekRemaining = Math.max(0, weekTotal - weekAssignedAll);
-
-          const fmt = (iso: string) => {
-            const d = new Date(iso);
-            return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
-          };
-
-          const perDayMsgs = displayDays.map((d) => `${fmt(d.date)}: ${Math.max(0, Number(d.target_value || 0) - (dayAssignedTotalsAll[d.date] || 0))}`);
-
-          showSuccessToast(`Giao KPI tuần thành công. Còn lại tuần: ${weekRemaining} KPI. Theo ngày: ${perDayMsgs.join(' · ')}`);
+          showSuccessToast(`Giao KPI tuần thành công!`);
         } catch {
           // ignore errors computing summary
         }
@@ -276,33 +272,36 @@ export default function AssignWeek() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 px-12 py-10">
+    <div className="min-h-screen bg-gray-50 px-6 py-10">
       <div className="mx-auto full-w space-y-6">
-        <div className="rounded-2xl border border-gray-200 bg-white px-8 py-6 shadow-sm">
-          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-gray-100 pb-5">
+        <div className="rounded-2xl border border-gray-200 bg-white/95 px-8 py-6 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-4 border-b border-rose-100 pb-5">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Quy trình giao KPI</p>
-              <h1 className="text-2xl font-semibold text-gray-900">Giao KPI theo tuần</h1>
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-rose-400">Quy trình giao KPI</p>
+              <h1 className="text-3xl font-semibold text-gray-900">Giao KPI theo tuần</h1>
+              {currentUser?.role === 'leader' && (
+                <p className="mt-2 text-sm text-rose-500">Phòng ban: {leaderDeptName ?? '—'}</p>
+              )}
             </div>
-            <button className="text-sm font-medium text-pink-500 hover:text-pink-700" onClick={() => navigate(-1)}>Quay lại</button>
+            <button className="rounded-full border border-rose-200 px-4 py-2 text-sm font-medium text-rose-500 transition hover:border-rose-400 hover:bg-rose-50" onClick={() => navigate(-1)}>Quay lại</button>
           </div>
 
           {loading ? (
             <div className="py-12 text-center text-sm text-gray-600">Đang tải dữ liệu...</div>
           ) : (
             <div className="space-y-6 pt-6">
-              <div className="grid gap-4 rounded-xl border border-gray-100 bg-gray-50/60 p-5 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-4 rounded-2xl border border-rose-100 bg-white/80 p-6 shadow-sm shadow-rose-100 sm:grid-cols-2 lg:grid-cols-3">
                 <div className="space-y-1">
-                  <p className="text-[11px] font-medium uppercase tracking-wide text-gray-500">Chuỗi sản xuất</p>
-                  <select className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500" value={selectedChainId ?? ''} onChange={(e) => setSelectedChainId(e.target.value ? Number(e.target.value) : null)}>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-rose-400">Chuỗi sản xuất</p>
+                  <select className="w-full rounded-xl border border-rose-200 bg-white/90 px-3 py-2 text-sm font-medium text-gray-800 transition focus:border-rose-400 focus:ring-rose-200" value={selectedChainId ?? ''} onChange={(e) => setSelectedChainId(e.target.value ? Number(e.target.value) : null)}>
                     <option value="">-- Chọn chuỗi --</option>
-                    {chains.map(c => (<option key={c.chain_id} value={c.chain_id}>{c.name}</option>))}
+                    {visibleChains.map(c => (<option key={c.chain_id} value={c.chain_id}>{c.name}</option>))}
                   </select>
                 </div>
 
                 <div className="space-y-1">
-                  <p className="text-[11px] font-medium uppercase tracking-wide text-gray-500">KPI mục tiêu</p>
-                  <select className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500" value={selectedKpiId ?? ''} onChange={(e) => setSelectedKpiId(e.target.value ? Number(e.target.value) : null)}>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-rose-400">KPI mục tiêu</p>
+                  <select className="w-full rounded-xl border border-rose-200 bg-white/90 px-3 py-2 text-sm font-medium text-gray-800 transition focus:border-rose-400 focus:ring-rose-200" value={selectedKpiId ?? ''} onChange={(e) => setSelectedKpiId(e.target.value ? Number(e.target.value) : null)}>
                     <option value="">-- Chọn KPI --</option>
                     {kpis.map(k => (
                       <option key={k.chain_kpi_id} value={k.chain_kpi_id}>{`Mục tiêu ${k.target_value} KPI${k.start_date && k.end_date ? ` — ${new Date(k.start_date).toLocaleDateString()} → ${new Date(k.end_date).toLocaleDateString()}` : k.end_date ? ` — Hạn: ${new Date(k.end_date).toLocaleDateString()}` : ''}`}</option>
@@ -311,7 +310,7 @@ export default function AssignWeek() {
                 </div>
 
                 <div className="space-y-1">
-                  <p className="text-[11px] font-medium uppercase tracking-wide text-gray-500">Tuần thực hiện</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-rose-400">Tuần thực hiện</p>
                   {(() => {
                     const kpiStart = currentKpi && currentKpi.start_date ? new Date(currentKpi.start_date) : null;
                     const kpiEnd = currentKpi && currentKpi.end_date ? new Date(currentKpi.end_date) : null;
@@ -332,7 +331,7 @@ export default function AssignWeek() {
                     };
 
                     return (
-                      <select className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500" value={selectedWeekIndex ?? ''} onChange={(e) => setSelectedWeekIndex(e.target.value ? Number(e.target.value) : null)}>
+                      <select className="w-full rounded-xl border border-rose-200 bg-white/90 px-3 py-2 text-sm font-medium text-gray-800 transition focus:border-rose-400 focus:ring-rose-200" value={selectedWeekIndex ?? ''} onChange={(e) => setSelectedWeekIndex(e.target.value ? Number(e.target.value) : null)}>
                         <option value="">-- Chọn tuần --</option>
                         {weeksWithDisplay.map(({ week, displayDays }) => (
                           <option key={week.week_index} value={week.week_index}>
@@ -343,20 +342,14 @@ export default function AssignWeek() {
                     );
                   })()}
                 </div>
-
-                {currentUser?.role === 'leader' && (
-                  <div className="space-y-1">
-                    <p className="text-[11px] font-medium uppercase tracking-wide text-gray-500">Phòng ban của bạn</p>
-                    <div className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700">{chain?.steps.find(s => s.department_id === currentUser.department_id)?.department?.name || '—'}</div>
-                  </div>
-                )}
+                
               </div>
 
               {currentUser?.role === 'admin' && chain && (
-                <div className="rounded-xl border border-gray-100 bg-white/80 p-5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Phòng ban chịu trách nhiệm</p>
+                <div className="rounded-2xl border border-rose-100 bg-white/85 p-5 shadow-sm shadow-rose-50">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-rose-400">Phòng ban chịu trách nhiệm</p>
                   <div className="mt-3">
-                    <select className="w-80 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500" value={selectedDepartment ?? ''} onChange={(e) => setSelectedDepartment(e.target.value ? Number(e.target.value) : null)}>
+                    <select className="w-80 rounded-xl border border-rose-200 bg-white/90 px-3 py-2 text-sm font-medium text-gray-800 focus:border-rose-400 focus:ring-rose-200" value={selectedDepartment ?? ''} onChange={(e) => setSelectedDepartment(e.target.value ? Number(e.target.value) : null)}>
                       <option value="">-- Chọn phòng ban --</option>
                       {(() => {
                         const uniq = Array.from(new Map((chain.steps || []).map(s => {
@@ -373,37 +366,42 @@ export default function AssignWeek() {
                 </div>
               )}
 
-              <div className="rounded-2xl border border-gray-100 bg-white p-6">
-                <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+              <div className="rounded-3xl border border-rose-100 bg-white/95 p-6 shadow-xl shadow-rose-100/70">
+                <div className="flex items-center justify-between border-b border-rose-100 pb-4">
                   <div>
-                    <p className="text-sm text-gray-500">Chọn nhân sự và phân KPI theo từng ngày làm việc</p>
+                    <p className="text-sm text-gray-600">Chọn nhân sự và phân KPI theo từng ngày làm việc</p>
                   </div>
-                  <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">{(chain?.steps || []).filter(s => !selectedDepartment || s.department_id === selectedDepartment).length} bước</span>
+                  <span className="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-500">{(chain?.steps || []).filter(s => !selectedDepartment || s.department_id === selectedDepartment).length} bước</span>
                 </div>
 
                 <div className="mt-6 space-y-4">
                   {(chain?.steps || []).filter(s => !selectedDepartment || s.department_id === selectedDepartment).map(step => (
-                    <div key={step.step_id ?? step.step_order} className="rounded-xl border border-gray-100 bg-gray-50/60 p-5 shadow-sm">
+                    <div key={step.step_id ?? step.step_order} className="rounded-2xl border border-rose-100/70 bg-white/90 p-5 shadow-sm shadow-rose-100/60">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <h3 className="text-base font-semibold text-gray-900">{step.title}</h3>
-                          <p className="text-xs text-gray-500">Phòng ban: {step.department?.name || step.department_id}</p>
+                          <p className="text-xs text-rose-500">Phòng ban: {step.department?.name || step.department_id}</p>
                         </div>
                         <div className="w-full max-w-sm">
-                          <p className="text-[11px] font-medium uppercase tracking-wide text-gray-500">Nhân sự phụ trách</p>
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-rose-400">Nhân sự phụ trách</p>
                           <div className="space-y-2">
-                            {(stepAssigns.filter(s => s.step_id === (step.step_id ?? step.step_order))).map(assign => (
-                              <div key={assign.id} className="flex items-center gap-2">
-                                <select className={`mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500`} value={assign.assigned_to ?? ''} onChange={(e) => handleAssignChange(assign.id, e.target.value ? Number(e.target.value) : undefined)}>
-                                  <option value="">-- Chọn nhân viên --</option>
-                                  {employeesForDept(step.department_id).map(u => (
-                                    <option key={u.user_id} value={u.user_id}>{u.name} ({u.department_position || '—'})</option>
-                                  ))}
-                                </select>
-                                <button type="button" className="text-sm text-gray-500" onClick={() => removeAssignee(assign.id)}>Xóa</button>
-                              </div>
-                            ))}
-                            <button type="button" className="mt-2 text-sm text-pink-600" onClick={() => addAssignee(step)}>Thêm người</button>
+                          {(stepAssigns.filter(s => s.step_id === (step.step_id ?? step.step_order))).map(assign => (
+                            <div key={assign.id} className="flex items-center gap-2">
+                            <select className="mt-1 w-full rounded-xl border border-rose-200 bg-white/90 px-3 py-2 text-sm font-medium text-gray-800 focus:border-rose-400 focus:ring-rose-200" value={assign.assigned_to ?? ''} onChange={(e) => handleAssignChange(assign.id, e.target.value ? Number(e.target.value) : undefined)}>
+                              <option value="">-- Chọn nhân viên --</option>
+                              {(() => {
+                              const emps = employeesForDept(step.department_id);
+                              const leaders = emps.filter(u => u.role === 'leader');
+                              const others = emps.filter(u => u.role !== 'leader');
+                              return leaders.concat(others).map(u => (
+                                <option key={u.user_id} value={u.user_id}>{u.name} ({u.department_position || '—'})</option>
+                              ));
+                              })()}
+                            </select>
+                            <button type="button" className="text-sm text-rose-400 hover:text-rose-600" onClick={() => removeAssignee(assign.id)}>Xóa</button>
+                            </div>
+                          ))}
+                          <button type="button" className="mt-2 text-sm font-medium text-rose-500" onClick={() => addAssignee(step)}>Thêm người</button>
                           </div>
                         </div>
                       </div>
@@ -436,14 +434,14 @@ export default function AssignWeek() {
                             const weekRemainingByDayLimit = displayDays.reduce((a, d) => a + Math.max(0, Number(d.target_value || 0) - (dayAssignedTotalsAll[d.date] || 0)), 0);
 
                             return (
-                              <div key={assign.id} className="mt-5 rounded-lg border border-gray-200 bg-white/90 p-4">
+                              <div key={assign.id} className="mt-5 rounded-2xl border border-rose-100 bg-white p-4 shadow-sm">
                                 <div className="flex flex-wrap items-center justify-between gap-3">
                                   <div>
-                                    <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Phân bổ theo ngày</p>
-                                    <p className="text-sm text-gray-600">{users.find(u => u.user_id === assign.assigned_to)?.name || '—'}</p>
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-rose-400">Phân bổ theo ngày</p>
+                                    <p className="text-sm text-gray-700">{users.find(u => u.user_id === assign.assigned_to)?.name || '—'}</p>
                                   </div>
                                   <div className="flex items-center gap-2">
-                                    <div className="rounded-full bg-pink-50 px-3 py-1 text-xs font-semibold text-pink-600">Còn lại (theo ngày): {weekRemainingByDayLimit} KPI</div>
+                                    <div className="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-500">Còn lại: {weekRemainingByDayLimit} KPI</div>
                                   </div>
                                 </div>
                                 <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -455,8 +453,8 @@ export default function AssignWeek() {
                                     const remainingDayKpi = Math.max(0, dayTarget - assigned);
 
                                     return (
-                                      <div key={dateIso} className="rounded-lg border border-gray-100 bg-gray-50/80 p-3">
-                                        <p className="text-xs font-semibold text-gray-600">{new Date(dateIso).toLocaleDateString()}</p>
+                                      <div key={dateIso} className="rounded-xl border border-rose-100 bg-rose-50/60 p-3">
+                                        <p className="text-xs font-semibold text-rose-500">{new Date(dateIso).toLocaleDateString()}</p>
                                         <p className="text-[11px] text-gray-500">Tổng {dayTarget} KPI · Còn lại {remainingDayKpi} KPI</p>
                                         <input
                                           type="number"
@@ -468,7 +466,7 @@ export default function AssignWeek() {
                                             const clamped = Math.min(Math.max(v, 0), remainingDayKpi);
                                             handleDayChange(assign.id, dateIso, clamped);
                                           }}
-                                          className="mt-3 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:border-pink-500 focus:ring-pink-500"
+                                          className="mt-3 w-full rounded-xl border border-white/70 bg-white/90 px-3 py-2 text-sm text-gray-800 focus:border-rose-400 focus:ring-rose-200"
                                         />
                                         {currentValue > 0 && (
                                           <div className="mt-3 space-y-2">
@@ -478,7 +476,7 @@ export default function AssignWeek() {
                                                 placeholder={`Tên KPI #${k + 1}`}
                                                 value={(assign.day_titles && assign.day_titles[dateIso] && assign.day_titles[dateIso][k]) || ''}
                                                 onChange={(e) => handleDayTitleChange(assign.id, dateIso, k, e.target.value)}
-                                                className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm"
+                                                className="w-full rounded-xl border border-rose-100/70 bg-white px-3 py-2 text-sm text-gray-800 focus:border-rose-400 focus:ring-rose-200"
                                               />
                                             ))}
                                           </div>
@@ -497,8 +495,8 @@ export default function AssignWeek() {
               </div>
 
               <div className="flex flex-wrap items-center justify-end gap-3 border-t border-gray-100 pt-5">
-                <button className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-600 hover:border-gray-400" onClick={() => navigate(-1)}>Hủy</button>
-                <button className="rounded-lg bg-pink-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-pink-700 disabled:cursor-not-allowed disabled:opacity-60" onClick={handleSubmit} disabled={submitting}>{submitting ? 'Đang gửi...' : 'Giao tuần'}</button>
+                <button className="rounded-full border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-500 transition hover:border-rose-400 hover:bg-rose-50" onClick={() => navigate(-1)}>Hủy</button>
+                <button className="rounded-full bg-rose-500 px-6 py-2 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-60" onClick={handleSubmit} disabled={submitting}>{submitting ? 'Đang gửi...' : 'Giao tuần'}</button>
               </div>
             </div>
           )}

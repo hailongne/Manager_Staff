@@ -219,9 +219,13 @@ export default function MyAssignments() {
                   ) : (
                     <button className="px-3 py-1 rounded bg-pink-600 text-white text-sm" onClick={async () => {
                       try {
-                        await acceptAssignment(it.assignment_id);
-                        showSuccessToast('Đã nhận KPI. Leader sẽ được thông báo.');
-                        await fetchItems();
+                        const res = await acceptAssignment(it.assignment_id);
+                        if (res?.accepted !== false) {
+                          showSuccessToast('Đã nhận KPI.');
+                          await fetchItems();
+                        } else {
+                          showErrorToast('Không thể nhận KPI.');
+                        }
                       } catch (e) {
                         console.error(e);
                         showErrorToast('Không thể nhận KPI.');

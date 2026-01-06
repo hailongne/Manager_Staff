@@ -1674,6 +1674,21 @@ exports.saveAssignmentDayResult = async (req, res) => {
   }
 };
 
+const notifyLeaderAboutAcceptance = (assignment) => {
+  if (!assignment) return Promise.resolve();
+
+  const notifMsg = `Nhân viên đã nhận KPI ${assignment.chain_kpi_id} (bước ${assignment.step_id}) tuần ${assignment.week_index}. Vui lòng xác nhận.`;
+  return Notification.create({
+    type: 'kpi_accept',
+    title: 'Nhận KPI',
+    message: notifMsg,
+    metadata: { assignment_id: assignment.assignment_id },
+    recipient_role: 'leader',
+    entity_type: 'chain_kpi_assignment',
+    entity_id: assignment.assignment_id
+  });
+};
+
 /**
  * Employee accepts an assignment (claims it) — notifies leaders
  */
@@ -1687,20 +1702,15 @@ exports.acceptAssignment = async (req, res) => {
     const record = await ChainKpiAssignment.findByPk(assignment_id);
     if (!record) return res.status(404).json({ message: 'Assignment không tồn tại' });
 
-    await record.update({ accepted: true, accepted_by: actor, accepted_at: new Date() });
+    if (!record.accepted) {
+      await record.update({ accepted: true, accepted_by: actor, accepted_at: new Date() });
 
-    const notifMsg = `Nhân viên đã nhận KPI ${record.chain_kpi_id} (bước ${record.step_id}) tuần ${record.week_index}. Vui lòng xác nhận.`;
-    await Notification.create({
-      type: 'kpi_accept',
-      title: 'Nhận KPI',
-      message: notifMsg,
-      metadata: { assignment_id },
-      recipient_role: 'leader',
-      entity_type: 'chain_kpi_assignment',
-      entity_id: assignment_id
-    });
+      notifyLeaderAboutAcceptance(record).catch((err) => {
+        console.warn('notifyLeaderAboutAcceptance failed', err);
+      });
+    }
 
-    return res.json({ message: 'Bạn đã nhận KPI. Leader sẽ được thông báo.', assignment: record.toJSON() });
+    return res.json({ accepted: true, assignment: record.toJSON() });
   } catch (err) {
     console.error('acceptAssignment error', err);
     res.status(500).json({ message: 'Lỗi server' });

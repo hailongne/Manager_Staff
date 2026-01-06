@@ -11,6 +11,11 @@ exports.getNotifications = async (req, res) => {
         { recipient_role: 'admin', recipient_user_id: null },
         { recipient_role: 'admin', recipient_user_id: req.user.user_id }
       ];
+    } else if (req.user.role === 'leader') {
+      where[Op.or] = [
+        { recipient_role: 'leader', recipient_user_id: null },
+        { recipient_role: 'leader', recipient_user_id: req.user.user_id }
+      ];
     } else {
       where.recipient_role = 'user';
       where.recipient_user_id = req.user.user_id;
@@ -47,6 +52,13 @@ exports.markAsRead = async (req, res) => {
       ) {
         return res.status(403).json({ message: 'Không có quyền với thông báo này' });
       }
+    } else if (req.user.role === 'leader') {
+      if (
+        notification.recipient_role !== 'leader' ||
+        (notification.recipient_user_id && notification.recipient_user_id !== req.user.user_id)
+      ) {
+        return res.status(403).json({ message: 'Không có quyền với thông báo này' });
+      }
     } else if (notification.recipient_role !== 'user' || notification.recipient_user_id !== req.user.user_id) {
       return res.status(403).json({ message: 'Không có quyền với thông báo này' });
     }
@@ -74,6 +86,13 @@ exports.deleteNotification = async (req, res) => {
       ) {
         return res.status(403).json({ message: 'Không có quyền với thông báo này' });
       }
+    } else if (req.user.role === 'leader') {
+      if (
+        notification.recipient_role !== 'leader' ||
+        (notification.recipient_user_id && notification.recipient_user_id !== req.user.user_id)
+      ) {
+        return res.status(403).json({ message: 'Không có quyền với thông báo này' });
+      }
     } else if (notification.recipient_role !== 'user' || notification.recipient_user_id !== req.user.user_id) {
       return res.status(403).json({ message: 'Không có quyền với thông báo này' });
     }
@@ -94,6 +113,11 @@ exports.clearNotifications = async (req, res) => {
       where[Op.or] = [
         { recipient_role: 'admin', recipient_user_id: null },
         { recipient_role: 'admin', recipient_user_id: req.user.user_id }
+      ];
+    } else if (req.user.role === 'leader') {
+      where[Op.or] = [
+        { recipient_role: 'leader', recipient_user_id: null },
+        { recipient_role: 'leader', recipient_user_id: req.user.user_id }
       ];
     } else {
       where.recipient_role = 'user';
@@ -116,6 +140,11 @@ exports.markAllAsRead = async (req, res) => {
       where[Op.or] = [
         { recipient_role: 'admin', recipient_user_id: null },
         { recipient_role: 'admin', recipient_user_id: req.user.user_id }
+      ];
+    } else if (req.user.role === 'leader') {
+      where[Op.or] = [
+        { recipient_role: 'leader', recipient_user_id: null },
+        { recipient_role: 'leader', recipient_user_id: req.user.user_id }
       ];
     } else {
       where.recipient_role = 'user';

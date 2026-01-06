@@ -1,6 +1,6 @@
 import type { ChainKpi } from "../types";
 import { toggleDayCompletion } from "../../../../api/productionChains";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { KpiActions } from "./KpiActions";
 import { KpiSummary } from "./KpiSummary";
 import { KpiTable } from "./KpiTable";
