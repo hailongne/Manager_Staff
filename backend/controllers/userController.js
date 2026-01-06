@@ -8,6 +8,7 @@ const { User } = require('../models');
 const { shapeUser } = require('../utils/formatters');
 const { parseInteger } = require('../utils/validators');
 const { HTTP_STATUS } = require('../utils/constants');
+const { createUserNotification } = require('../utils/notificationService');
 
 /**
  * Parse user ID from params
@@ -165,6 +166,27 @@ exports.updateUser = async (req, res) => {
     }
 
     const user = await userService.updateUser(userId, req.body, authUser);
+    if (authUser.user_id !== userId) {
+      const actorName = authUser.name ? `Quản trị ${authUser.name}` : 'Quản trị viên';
+      const updatedFields = Object.keys(req.body || {}).filter((key) => req.body[key] !== undefined);
+      try {
+        await createUserNotification({
+          type: 'profile_update',
+          title: 'Hồ sơ của bạn vừa được điều chỉnh',
+          message: `${actorName} đã cập nhật thông tin của bạn. Vui lòng kiểm tra lại dữ liệu cá nhân.`,
+          metadata: {
+            updated_fields: updatedFields,
+            updated_by: authUser.user_id
+          },
+          entityType: 'user',
+          entityId: userId,
+          recipientUserId: userId
+        });
+      } catch (notifyErr) {
+        console.error('Không thể gửi thông báo cập nhật nhân viên', notifyErr);
+      }
+    }
+
     res.json({ message: 'Cập nhật nhân viên thành công', user });
   } catch (err) {
     const status = err.status || HTTP_STATUS.INTERNAL_SERVER_ERROR;

@@ -110,6 +110,20 @@ export const getNotificationIcon = (type: Notification["type"]): string => {
       return "📝";
     case "profile_update":
       return "🧾";
+    case "chain_kpi":
+      return "⚙️";
+    case "chain_assignment":
+      return "📊";
+    case "kpi_result":
+      return "📮";
+    case "kpi_accept":
+      return "✅";
+    case "assignment_confirmed":
+      return "📌";
+    case "kpi_confirmed":
+      return "🏁";
+    case "test":
+      return "🧪";
     default:
       return "🔔";
   }

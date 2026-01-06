@@ -19,6 +19,8 @@ module.exports = async function (req, res, next) {
     req.user = {
       user_id: user.user_id,
       role: user.role,
+      name: user.name,
+      department: user.department,
       department_position: user.department_position,
       department_id: user.department_id
     };

@@ -3,10 +3,11 @@
  * API for managing production chains and steps
  */
 
-const { ProductionChain, ProductionChainStep, ChainKpi, KpiCompletion, Department, User, Notification, ChainKpiAssignment } = require('../models');
+const { ProductionChain, ProductionChainStep, ChainKpi, KpiCompletion, Department, User, ChainKpiAssignment } = require('../models');
 const { HTTP_STATUS } = require('../utils/constants');
 const { Op } = require('sequelize');
 const { calculateKpiDistribution } = require('../utils/kpiHelpers');
+const { createAdminNotification, createUserNotification, createLeaderNotification } = require('../utils/notificationService');
 
 
 
@@ -51,6 +52,67 @@ const collectNonZeroKpiDates = (kpi) => {
   });
 
   return Array.from(dates);
+};
+
+const getActorLabel = (user = {}) => {
+  if (!user) return 'Hệ thống';
+  if (user.name) {
+    if (user.role === 'admin') return `Admin ${user.name}`;
+    if (user.role === 'leader') return `Leader ${user.name}`;
+    return user.name;
+  }
+  return 'Hệ thống';
+};
+
+const uniqueIntegers = (values = []) => {
+  return Array.from(
+    new Set(
+      (values || [])
+        .map((value) => Number(value))
+        .filter((value) => Number.isInteger(value) && value > 0)
+    )
+  );
+};
+
+const findLeadersByDepartmentIds = async (departmentIds = []) => {
+  const ids = uniqueIntegers(departmentIds);
+  if (!ids.length) return [];
+  return User.findAll({
+    where: { role: 'leader', department_id: ids },
+    attributes: ['user_id', 'name', 'department', 'department_id']
+  });
+};
+
+const notifyLeadersForDepartments = async (departmentIds = [], buildPayload) => {
+  if (typeof buildPayload !== 'function') return;
+  const leaders = await findLeadersByDepartmentIds(departmentIds);
+  if (!leaders.length) return;
+  await Promise.all(
+    leaders.map((leader) => {
+      const payload = buildPayload(leader) || {};
+      return createLeaderNotification({
+        ...payload,
+        recipientUserId: leader.user_id || null
+      });
+    })
+  );
+};
+
+const getWeekInfo = (kpi, weekIndex) => {
+  if (!kpi || !Array.isArray(kpi.weeks)) return null;
+  return kpi.weeks.find((week) => Number(week.week_index) === Number(weekIndex)) || null;
+};
+
+const getAssignmentDeadline = (assignment, fallbackWeek) => {
+  const dayAssignments = assignment?.day_assignments || {};
+  const days = Object.keys(dayAssignments).filter(Boolean).sort();
+  if (days.length) {
+    return days[days.length - 1];
+  }
+  if (fallbackWeek && fallbackWeek.end_date) {
+    return fallbackWeek.end_date;
+  }
+  return null;
 };
 
 const refreshMonthlyAccumulationState = async (kpi) => {
@@ -139,6 +201,37 @@ exports.createChain = async (req, res) => {
     );
 
     await Promise.all(stepPromises);
+
+    const departmentIds = steps.map((step) => step.department_id).filter(Boolean);
+    const actorLabel = getActorLabel(req.user);
+    try {
+      await notifyLeadersForDepartments(departmentIds, () => ({
+        type: 'chain_kpi',
+        title: 'Chuỗi sản xuất mới',
+        message: `${actorLabel} vừa tạo chuỗi "${chain.name}" có liên quan tới phòng ban của bạn`,
+        metadata: {
+          chain_id: chain.chain_id,
+          event: 'created',
+          steps: steps.length
+        },
+        entityType: 'production_chain',
+        entityId: chain.chain_id
+      }));
+
+      await createAdminNotification({
+        type: 'chain_kpi',
+        title: 'Chuỗi sản xuất mới',
+        message: `${actorLabel} đã tạo chuỗi "${chain.name}" với ${steps.length} bước.`,
+        metadata: {
+          chain_id: chain.chain_id,
+          event: 'created'
+        },
+        entityType: 'production_chain',
+        entityId: chain.chain_id
+      });
+    } catch (notifyErr) {
+      console.error('Không thể gửi thông báo tạo chuỗi', notifyErr);
+    }
 
     res.status(201).json({
       message: 'Tạo chuỗi sản xuất thành công',
@@ -616,12 +709,48 @@ exports.deleteChain = async (req, res) => {
       return res.status(404).json({ message: 'Chuỗi sản xuất không tồn tại' });
     }
 
+    const chainName = chain.name;
+    const chainSteps = await ProductionChainStep.findAll({
+      where: { chain_id },
+      attributes: ['department_id']
+    });
+    const departmentIds = chainSteps.map((step) => step.department_id).filter(Boolean);
+
     // Delete associated steps and tasks
     await ProductionChainStep.destroy({ where: { chain_id } });
     await Task.destroy({ where: { production_chain_id: chain_id } });
 
     // Delete chain
     await chain.destroy();
+
+    const actorLabel = getActorLabel(req.user);
+    try {
+      await notifyLeadersForDepartments(departmentIds, () => ({
+        type: 'chain_kpi',
+        title: 'Chuỗi sản xuất bị gỡ',
+        message: `${actorLabel} vừa xóa chuỗi "${chainName}" liên quan tới phòng ban của bạn`,
+        metadata: {
+          chain_id,
+          event: 'deleted'
+        },
+        entityType: 'production_chain',
+        entityId: Number(chain_id)
+      }));
+
+      await createAdminNotification({
+        type: 'chain_kpi',
+        title: 'Chuỗi sản xuất bị gỡ',
+        message: `${actorLabel} đã xóa chuỗi "${chainName}".`,
+        metadata: {
+          chain_id,
+          event: 'deleted'
+        },
+        entityType: 'production_chain',
+        entityId: Number(chain_id)
+      });
+    } catch (notifyErr) {
+      console.error('Không thể gửi thông báo xóa chuỗi', notifyErr);
+    }
 
     res.json({ message: 'Xóa chuỗi sản xuất thành công' });
   } catch (err) {
@@ -688,6 +817,37 @@ exports.updateChain = async (req, res) => {
     );
 
     await Promise.all(stepPromises);
+
+    const actorLabel = getActorLabel(req.user);
+    const departmentIds = steps.map((step) => step.department_id).filter(Boolean);
+    try {
+      await notifyLeadersForDepartments(departmentIds, () => ({
+        type: 'chain_kpi',
+        title: 'Chuỗi sản xuất được cập nhật',
+        message: `${actorLabel} vừa chỉnh sửa chuỗi "${name}" có liên quan tới phòng ban của bạn`,
+        metadata: {
+          chain_id,
+          event: 'updated',
+          steps: steps.length
+        },
+        entityType: 'production_chain',
+        entityId: Number(chain_id)
+      }));
+
+      await createAdminNotification({
+        type: 'chain_kpi',
+        title: 'Chuỗi sản xuất được cập nhật',
+        message: `${actorLabel} đã cập nhật chuỗi "${name}".`,
+        metadata: {
+          chain_id,
+          event: 'updated'
+        },
+        entityType: 'production_chain',
+        entityId: Number(chain_id)
+      });
+    } catch (notifyErr) {
+      console.error('Không thể gửi thông báo cập nhật chuỗi', notifyErr);
+    }
 
     res.json({
       message: 'Cập nhật chuỗi sản xuất thành công',
@@ -1595,6 +1755,72 @@ exports.assignWeek = async (req, res) => {
       return created;
     });
 
+    const assignedRecords = results.filter((record) => record.assigned_to);
+    const normalizedWeekIndex = Number(week_index);
+    try {
+      if (assignedRecords.length) {
+        const assigneeIds = uniqueIntegers(assignedRecords.map((record) => record.assigned_to));
+        const stepIds = uniqueIntegers(results.map((record) => record.step_id));
+        const [assignees, steps, chain] = await Promise.all([
+          assigneeIds.length
+            ? User.findAll({ where: { user_id: assigneeIds }, attributes: ['user_id', 'name'] })
+            : [],
+          stepIds.length
+            ? ProductionChainStep.findAll({ where: { step_id: stepIds }, attributes: ['step_id', 'title'] })
+            : [],
+          ProductionChain.findByPk(kpi.chain_id, { attributes: ['chain_id', 'name'] })
+        ]);
+
+        const assigneeMap = new Map(assignees.map((user) => [user.user_id, user]));
+        const stepMap = new Map(steps.map((step) => [step.step_id, step]));
+        const weekInfo = getWeekInfo(kpi, normalizedWeekIndex);
+        const actorLabel = getActorLabel(req.user);
+
+        await Promise.all(
+          assignedRecords.map((assignment) => {
+            const step = stepMap.get(assignment.step_id);
+            const deadline = getAssignmentDeadline(assignment, weekInfo);
+            const chainName = chain?.name || `KPI #${kpi_id}`;
+            const stepSuffix = step?.title ? ` ${step.title}` : '';
+            const safeMessage = `${actorLabel} giao bạn nhiệm vụ${stepSuffix} tuần ${normalizedWeekIndex}`.trim();
+
+            return createUserNotification({
+              type: 'task',
+              title: `Giao việc ${chainName}`,
+              message: safeMessage,
+              metadata: {
+                assignment_id: assignment.assignment_id,
+                week_index: normalizedWeekIndex,
+                chain_id: chain?.chain_id || kpi.chain_id,
+                step_title: step?.title || null,
+                assignee_name: assigneeMap.get(assignment.assigned_to)?.name || null,
+                deadline
+              },
+              entityType: 'chain_kpi_assignment',
+              entityId: assignment.assignment_id,
+              recipientUserId: assignment.assigned_to
+            });
+          })
+        );
+
+        await createAdminNotification({
+          type: 'chain_assignment',
+          title: 'Phân công KPI',
+          message: `${actorLabel} đã giao ${assignedRecords.length} nhiệm vụ cho tuần ${normalizedWeekIndex} của chuỗi ${chain?.name || ''}`.trim(),
+          metadata: {
+            chain_id: chain?.chain_id || kpi.chain_id,
+            assignment_ids: assignedRecords.map((assignment) => assignment.assignment_id),
+            week_index: normalizedWeekIndex,
+            event: 'assigned'
+          },
+          entityType: 'chain_kpi',
+          entityId: Number(kpi_id)
+        });
+      }
+    } catch (notifyErr) {
+      console.error('Không thể gửi thông báo giao việc', notifyErr);
+    }
+
     return res.json({ message: 'Lưu giao việc thành công', assignments: results });
   } catch (err) {
     console.error('assignWeek error', err);
@@ -1657,14 +1883,13 @@ exports.saveAssignmentDayResult = async (req, res) => {
 
     // Notify leaders to review/confirm this day's result
     const notifMsg = `Nhân viên đã nộp kết quả cho KPI ${record.chain_kpi_id} - ngày ${date}. Vui lòng kiểm tra.`;
-    await Notification.create({
+    await createLeaderNotification({
       type: 'kpi_result',
       title: 'Kết quả KPI đã nộp',
       message: notifMsg,
       metadata: { assignment_id, date, slotIndex },
-      recipient_role: 'leader',
-      entity_type: 'chain_kpi_assignment',
-      entity_id: assignment_id
+      entityType: 'chain_kpi_assignment',
+      entityId: assignment_id
     });
 
     return res.json({ message: 'Lưu kết quả thành công', assignment: record.toJSON() });
@@ -1678,14 +1903,13 @@ const notifyLeaderAboutAcceptance = (assignment) => {
   if (!assignment) return Promise.resolve();
 
   const notifMsg = `Nhân viên đã nhận KPI ${assignment.chain_kpi_id} (bước ${assignment.step_id}) tuần ${assignment.week_index}. Vui lòng xác nhận.`;
-  return Notification.create({
+  return createLeaderNotification({
     type: 'kpi_accept',
     title: 'Nhận KPI',
     message: notifMsg,
     metadata: { assignment_id: assignment.assignment_id },
-    recipient_role: 'leader',
-    entity_type: 'chain_kpi_assignment',
-    entity_id: assignment.assignment_id
+    entityType: 'chain_kpi_assignment',
+    entityId: assignment.assignment_id
   });
 };
 

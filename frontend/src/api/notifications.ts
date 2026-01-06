@@ -1,13 +1,24 @@
 import api from "./axios";
 
+export type NotificationType =
+  | "profile_update"
+  | "task"
+  | "chain_kpi"
+  | "chain_assignment"
+  | "assignment_confirmed"
+  | "kpi_confirmed"
+  | "kpi_result"
+  | "kpi_accept"
+  | "test";
+
 export interface Notification {
   notification_id: number;
-  type: "profile_update" | "task";
+  type: NotificationType;
   title: string;
   message: string;
   metadata?: Record<string, unknown> | null;
   status: "unread" | "read";
-  recipient_role: "admin" | "user";
+  recipient_role: "admin" | "user" | "leader";
   recipient_user_id?: number | null;
   entity_type?: string | null;
   entity_id?: number | null;

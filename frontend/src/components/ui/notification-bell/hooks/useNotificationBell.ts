@@ -129,6 +129,25 @@ export function useNotificationBell() {
         return;
       }
 
+      if (notification.entity_type === "user") {
+        navigate("/profile");
+        return;
+      }
+
+      if (notification.entity_type === "production_chain" || notification.entity_type === "chain_kpi") {
+        navigate("/production-chains", {
+          state: { focusChainId: notification.entity_id }
+        });
+        return;
+      }
+
+      if (notification.entity_type === "chain_kpi_assignment") {
+        navigate("/assignments", {
+          state: { focusAssignmentId: notification.entity_id }
+        });
+        return;
+      }
+
       if (notification.entity_type === "task") {
         navigate("/tasks", { state: { focusTaskId: notification.entity_id } });
         return;
@@ -158,6 +177,9 @@ export function useNotificationBell() {
       if (navigateAfter) {
         handleNavigate(notification);
         setOpen(false);
+        window.setTimeout(() => {
+          window.location.reload();
+        }, 100);
       }
     },
     [handleNavigate]

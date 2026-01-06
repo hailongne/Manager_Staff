@@ -30,6 +30,19 @@ async function createUserNotification({ type, title, message, metadata = {}, ent
   });
 }
 
+async function createLeaderNotification({ type, title, message, metadata = {}, entityType = null, entityId = null, recipientUserId = null }) {
+  await Notification.create({
+    type,
+    title,
+    message,
+    metadata,
+    entity_type: entityType,
+    entity_id: entityId,
+    recipient_role: 'leader',
+    recipient_user_id: recipientUserId
+  });
+}
+
 async function markNotificationsReadByEntity(entityType, entityId) {
   await Notification.update(
     { status: 'read' },
@@ -45,5 +58,6 @@ async function markNotificationsReadByEntity(entityType, entityId) {
 module.exports = {
   createAdminNotification,
   createUserNotification,
+  createLeaderNotification,
   markNotificationsReadByEntity
 };

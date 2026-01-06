@@ -61,7 +61,6 @@ export function KpiTable({ kpi, formatDate, formatDayDetail, onDayRightClick, ca
                   title={`Còn ${remainingKpi} KPI chưa phân bổ`}
                 >
                   <span>Giao việc</span>
-                  <span className="text-[10px] font-normal text-sky-500">Còn {remainingKpi} KPI</span>
                 </button>
               )}
             </div>
