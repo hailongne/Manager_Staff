@@ -8,6 +8,7 @@ const ProductionChainStep = require('./ProductionChainStep');
 const ProductionChainFeedback = require('./ProductionChainFeedback');
 const ChainKpi = require('./ChainKpi');
 const KpiCompletion = require('./KpiCompletion');
+const ChainKpiAssignment = require('./ChainKpiAssignment');
 
 // Timesheet
 const Timesheet = require('./Timesheet');
@@ -15,9 +16,6 @@ const Timesheet = require('./Timesheet');
 // Notifications & Profile
 const Notification = require('./Notification');
 const ProfileUpdateRequest = require('./ProfileUpdateRequest');
-
-// Daily Tasks
-const DailyTask = require('./DailyTask');
 
 // Setup associations
 const setupAssociations = require('./associations');
@@ -29,11 +27,11 @@ const models = {
   ProductionChainStep,
   ProductionChainFeedback,
   ChainKpi,
+  ChainKpiAssignment,
   KpiCompletion,
   Timesheet,
   Notification,
-  ProfileUpdateRequest,
-  DailyTask
+  ProfileUpdateRequest
 };
 
 // Initialize associations

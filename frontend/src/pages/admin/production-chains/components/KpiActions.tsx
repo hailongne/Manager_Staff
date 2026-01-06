@@ -17,7 +17,7 @@ export function KpiActions({ canEditKpi, hasKpi, isAdmin, onCreateNewKpi, onOpen
       <button
         type="button"
         onClick={onCreateNewKpi}
-        className="text-xs font-semibold text-black hover:text-blue-700"
+        className="text-xs font-semibold text-blue-600 hover:text-blue-700"
         title="Ban hành KPI"
       >
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -29,7 +29,7 @@ export function KpiActions({ canEditKpi, hasKpi, isAdmin, onCreateNewKpi, onOpen
       <button
         type="button"
         onClick={onOpenKpiEditModal}
-        className="text-xs font-semibold text-black hover:text-yellow-700"
+        className="text-xs font-semibold text-yellow-600 hover:text-yellow-700"
         title="Chỉnh sửa KPI"
       >
         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

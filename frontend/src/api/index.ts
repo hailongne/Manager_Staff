@@ -1,7 +1,6 @@
 export * from './admin';
 export * from './auth';
 export * from './axios';
-export * from './dailyTasks';
 export * from './departments';
 export * from './notifications';
 export * from './productionChains';

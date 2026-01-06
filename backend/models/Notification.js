@@ -8,10 +8,12 @@ const NOTIFICATION_TYPES = [
   'chain_assignment',
   'assignment_confirmed',
   'kpi_confirmed',
+  'kpi_result',
+  'kpi_accept',
   'test'
 ];
 const NOTIFICATION_STATUS = ['unread', 'read'];
-const RECIPIENT_ROLES = ['admin', 'user'];
+const RECIPIENT_ROLES = ['admin', 'user', 'leader'];
 
 const Notification = sequelize.define('Notification', {
   notification_id: { 

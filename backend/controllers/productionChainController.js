@@ -3,7 +3,7 @@
  * API for managing production chains and steps
  */
 
-const { ProductionChain, ProductionChainStep, ChainKpi, KpiCompletion, Department, User } = require('../models');
+const { ProductionChain, ProductionChainStep, ChainKpi, KpiCompletion, Department, User, Notification, ChainKpiAssignment } = require('../models');
 const { HTTP_STATUS } = require('../utils/constants');
 const { Op } = require('sequelize');
 const { calculateKpiDistribution } = require('../utils/kpiHelpers');
@@ -33,6 +33,52 @@ const getWorkingDaysInWeek = (kpi, weekIndex) => {
   return week.days
     .filter(day => day.is_working_day)
     .map(day => day.date);
+};
+
+const collectNonZeroKpiDates = (kpi) => {
+  if (!kpi.weeks || !Array.isArray(kpi.weeks)) return [];
+
+  const dates = new Set();
+  kpi.weeks.forEach(week => {
+    if (!week || !Array.isArray(week.days)) return;
+    week.days.forEach(day => {
+      if (!day || !day.date) return;
+      const value = Number(day.target_value || 0);
+      if (value > 0) {
+        dates.add(day.date);
+      }
+    });
+  });
+
+  return Array.from(dates);
+};
+
+const refreshMonthlyAccumulationState = async (kpi) => {
+  const nonZeroDates = collectNonZeroKpiDates(kpi);
+  if (nonZeroDates.length === 0) {
+    return;
+  }
+
+  const completedMonthDaysCount = await KpiCompletion.count({
+    where: {
+      chain_kpi_id: kpi.chain_kpi_id,
+      completion_type: 'day',
+      date_iso: nonZeroDates
+    }
+  });
+
+  const monthFullyCompleted = completedMonthDaysCount === nonZeroDates.length;
+
+  if (monthFullyCompleted && !kpi.is_accumulated) {
+    const now = new Date();
+    await kpi.update({ is_accumulated: true, accumulated_at: now });
+    kpi.is_accumulated = true;
+    kpi.accumulated_at = now;
+  } else if (!monthFullyCompleted && kpi.is_accumulated) {
+    await kpi.update({ is_accumulated: false, accumulated_at: null });
+    kpi.is_accumulated = false;
+    kpi.accumulated_at = null;
+  }
 };
 
 /**
@@ -1102,6 +1148,8 @@ exports.toggleWeekCompletion = async (req, res) => {
       await KpiCompletion.bulkCreate(dayCompletions);
     }
 
+    await refreshMonthlyAccumulationState(kpi);
+
   } catch (err) {
     console.error('Toggle week completion error:', err);
     res.status(500).json({ message: 'Lỗi server' });
@@ -1243,6 +1291,8 @@ exports.toggleDayCompletion = async (req, res) => {
       // Auto-uncomplete week
       await weekCompletion.destroy();
     }
+
+    await refreshMonthlyAccumulationState(kpi);
 
   } catch (err) {
     console.error('Toggle day completion error:', err);
@@ -1425,6 +1475,254 @@ exports.deleteChainKpi = async (req, res) => {
     res.json({ message: 'Xóa KPI thành công' });
   } catch (err) {
     console.error('Delete chain KPI error:', err);
+    res.status(500).json({ message: 'Lỗi server' });
+  }
+};
+
+/**
+ * Assign a week of KPI steps to users and optionally record handover
+ */
+exports.assignWeek = async (req, res) => {
+  try {
+    const { kpi_id } = req.params;
+    const { week_index, assignments } = req.body;
+    const actor = req.user.user_id;
+
+    if (!kpi_id || week_index === undefined || !Array.isArray(assignments)) {
+      return res.status(400).json({ message: 'Thiếu dữ liệu bắt buộc' });
+    }
+
+    const kpi = await ChainKpi.findByPk(kpi_id);
+    if (!kpi) return res.status(404).json({ message: 'KPI không tồn tại' });
+
+    const sequelize = require('../config/db');
+
+    // Run validation and inserts inside a transaction with row locks to avoid race conditions
+    const results = await sequelize.transaction(async (trx) => {
+      // Lock the KPI row to serialize assignments for this KPI
+      await ChainKpi.findByPk(kpi_id, { transaction: trx, lock: trx.LOCK.UPDATE });
+
+      // Fetch existing assignments for this KPI/week and lock them
+      const existing = await ChainKpiAssignment.findAll({
+        where: { chain_kpi_id: kpi_id, week_index: Number(week_index) },
+        transaction: trx,
+        lock: trx.LOCK.UPDATE
+      });
+
+      // Collect step_ids we need department info for (from existing + incoming)
+      const stepIds = new Set(existing.map(r => r.step_id));
+      assignments.forEach(a => { if (a.step_id) stepIds.add(a.step_id); });
+      const stepIdList = Array.from(stepIds).filter(Boolean);
+
+      // Fetch steps to get department_id mapping
+      const steps = stepIdList.length > 0 ? await ProductionChainStep.findAll({ where: { step_id: stepIdList }, transaction: trx }) : [];
+      const stepMap = {};
+      steps.forEach(s => { stepMap[s.step_id] = s; });
+
+      // Build existing totals grouped by department and date
+      const totalsByDept = {};
+      existing.forEach(rec => {
+        const step = stepMap[rec.step_id];
+        const deptId = step ? String(step.department_id || '') : '';
+        if (!totalsByDept[deptId]) totalsByDept[deptId] = {};
+        const dr = rec.day_assignments || {};
+        Object.keys(dr).forEach(date => {
+          const v = Number(dr[date] || 0);
+          totalsByDept[deptId][date] = (totalsByDept[deptId][date] || 0) + v;
+        });
+      });
+
+      // Prepare displayDays for validation
+      const weekObj = (kpi.weeks || []).find(w => w.week_index === Number(week_index));
+      const kpiStart = kpi.start_date ? new Date(kpi.start_date) : null;
+      const kpiEnd = kpi.end_date ? new Date(kpi.end_date) : null;
+      const displayDays = (weekObj?.days || []).filter((d) => {
+        const dt = new Date(d.date);
+        if (kpiStart && dt < kpiStart) return false;
+        if (kpiEnd && dt > kpiEnd) return false;
+        return true;
+      });
+
+      // Validate incoming assignments per department/day
+      for (const a of assignments) {
+        const { step_id, day_assignments } = a;
+        const step = stepMap[step_id];
+        const deptId = step ? String(step.department_id || '') : '';
+        if (!step) return res.status(400).json({ message: `Step ${step_id} không tồn tại` });
+
+        if (day_assignments) {
+          Object.keys(day_assignments).forEach(date => {
+            const nv = Number(day_assignments[date] || 0);
+            if (nv < 0) {
+              throw new Error('Giá trị phân bổ theo ngày phải là số không âm');
+            }
+            totalsByDept[deptId] = totalsByDept[deptId] || {};
+            totalsByDept[deptId][date] = (totalsByDept[deptId][date] || 0) + nv;
+          });
+        }
+      }
+
+      // Perform validation against day targets for each relevant department/date
+      for (const d of displayDays) {
+        const date = d.date;
+        const dayTarget = Number(d.target_value || 0);
+        // For all departments that have totals for this date, validate
+        for (const deptId of Object.keys(totalsByDept)) {
+          const total = Number(totalsByDept[deptId][date] || 0);
+          if (total > dayTarget) {
+            throw new Error(`Tổng KPI đã giao cho ngày ${date} (phòng ${deptId}) vượt quá giới hạn (${total}/${dayTarget})`);
+          }
+        }
+      }
+
+      // If validation passes, create records within the transaction
+      const created = [];
+      for (const a of assignments) {
+        const { step_id, assigned_to, day_assignments, day_titles } = a;
+        const payload = {
+          chain_kpi_id: kpi_id,
+          week_index,
+          step_id,
+          assigned_to: assigned_to || null,
+          day_assignments: day_assignments || {},
+          day_titles: day_titles || {},
+          created_by: actor
+        };
+        const rec = await ChainKpiAssignment.create(payload, { transaction: trx });
+        created.push(rec.toJSON());
+      }
+
+      return created;
+    });
+
+    return res.json({ message: 'Lưu giao việc thành công', assignments: results });
+  } catch (err) {
+    console.error('assignWeek error', err);
+    const status = err && err.status ? err.status : 500;
+    const message = err && err.message ? err.message : 'Lỗi server';
+    res.status(status).json({ message });
+  }
+};
+
+/**
+ * Get current user's assignments
+ */
+exports.getMyAssignments = async (req, res) => {
+  try {
+    const userId = req.user.user_id;
+    const items = await ChainKpiAssignment.findAll({
+      where: { assigned_to: userId },
+      include: [
+        { model: ChainKpi, as: 'kpi' },
+        { model: User, as: 'assignee' }
+      ],
+      order: [['week_index', 'ASC'], ['step_id', 'ASC']]
+    });
+
+    res.json(items.map(i => i.toJSON()));
+  } catch (err) {
+    console.error('getMyAssignments error', err);
+    res.status(500).json({ message: 'Lỗi server' });
+  }
+};
+
+/**
+ * Save a result link for a specific assignment day
+ */
+exports.saveAssignmentDayResult = async (req, res) => {
+  try {
+    const { assignment_id } = req.params;
+    const { date, link, slotIndex } = req.body;
+    const actor = req.user.user_id;
+
+    if (!assignment_id || !date || !link) return res.status(400).json({ message: 'Thiếu date hoặc link' });
+
+    const record = await ChainKpiAssignment.findByPk(assignment_id);
+    if (!record) return res.status(404).json({ message: 'Assignment không tồn tại' });
+
+    // Require employee to accept assignment before saving results
+    if (!record.accepted) return res.status(400).json({ message: 'Bạn cần nhấn nhận KPI trước khi lưu kết quả' });
+
+    const current = record.day_results || {};
+
+    if (typeof slotIndex === 'number') {
+      const arr = Array.isArray(current[date]) ? current[date] : (current[date] ? [current[date]] : []);
+      arr[slotIndex] = { link, saved_by: actor, saved_at: new Date() };
+      current[date] = arr;
+    } else {
+      current[date] = { link, saved_by: actor, saved_at: new Date() };
+    }
+
+    await record.update({ day_results: current });
+
+    // Notify leaders to review/confirm this day's result
+    const notifMsg = `Nhân viên đã nộp kết quả cho KPI ${record.chain_kpi_id} - ngày ${date}. Vui lòng kiểm tra.`;
+    await Notification.create({
+      type: 'kpi_result',
+      title: 'Kết quả KPI đã nộp',
+      message: notifMsg,
+      metadata: { assignment_id, date, slotIndex },
+      recipient_role: 'leader',
+      entity_type: 'chain_kpi_assignment',
+      entity_id: assignment_id
+    });
+
+    return res.json({ message: 'Lưu kết quả thành công', assignment: record.toJSON() });
+  } catch (err) {
+    console.error('saveAssignmentDayResult error', err);
+    res.status(500).json({ message: 'Lỗi server' });
+  }
+};
+
+/**
+ * Employee accepts an assignment (claims it) — notifies leaders
+ */
+exports.acceptAssignment = async (req, res) => {
+  try {
+    const { assignment_id } = req.params;
+    const actor = req.user.user_id;
+
+    if (!assignment_id) return res.status(400).json({ message: 'Thiếu assignment_id' });
+
+    const record = await ChainKpiAssignment.findByPk(assignment_id);
+    if (!record) return res.status(404).json({ message: 'Assignment không tồn tại' });
+
+    await record.update({ accepted: true, accepted_by: actor, accepted_at: new Date() });
+
+    const notifMsg = `Nhân viên đã nhận KPI ${record.chain_kpi_id} (bước ${record.step_id}) tuần ${record.week_index}. Vui lòng xác nhận.`;
+    await Notification.create({
+      type: 'kpi_accept',
+      title: 'Nhận KPI',
+      message: notifMsg,
+      metadata: { assignment_id },
+      recipient_role: 'leader',
+      entity_type: 'chain_kpi_assignment',
+      entity_id: assignment_id
+    });
+
+    return res.json({ message: 'Bạn đã nhận KPI. Leader sẽ được thông báo.', assignment: record.toJSON() });
+  } catch (err) {
+    console.error('acceptAssignment error', err);
+    res.status(500).json({ message: 'Lỗi server' });
+  }
+};
+
+/**
+ * Get assignments for a KPI and week
+ */
+exports.getAssignmentsForKpiWeek = async (req, res) => {
+  try {
+    const { kpi_id } = req.params;
+    const { week_index } = req.query;
+    if (!kpi_id || !week_index) return res.status(400).json({ message: 'Thiếu kpi_id hoặc week_index' });
+
+    const items = await ChainKpiAssignment.findAll({
+      where: { chain_kpi_id: kpi_id, week_index: Number(week_index) }
+    });
+
+    return res.json(items.map(i => i.toJSON()));
+  } catch (err) {
+    console.error('getAssignmentsForKpiWeek error', err);
     res.status(500).json({ message: 'Lỗi server' });
   }
 };

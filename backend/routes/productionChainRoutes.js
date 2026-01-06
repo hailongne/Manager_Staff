@@ -31,6 +31,10 @@ router.put('/kpis/:kpi_id/weeks', authorize(['admin', 'leader']), productionChai
 router.put('/kpis/:kpi_id/days', authorize(['admin', 'leader']), productionChainController.updateKpiDays);
 router.delete('/kpis/:kpi_id', authorize('admin'), productionChainController.deleteChainKpi);
 
+// Assign a week of KPI steps
+router.post('/kpis/:kpi_id/assign-week', authorize(['admin', 'leader']), productionChainController.assignWeek);
+router.get('/kpis/:kpi_id/assignments', authorize(['admin', 'leader']), productionChainController.getAssignmentsForKpiWeek);
+
 // KPI completion routes
 router.get('/kpis/:kpi_id/completions', authorize(['admin', 'leader']), productionChainController.getKpiCompletions);
 router.post('/kpis/:kpi_id/complete-week/:week_index', authorize(['admin', 'leader']), productionChainController.toggleWeekCompletion);

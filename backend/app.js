@@ -26,7 +26,7 @@ const profileUpdateRoutes = require('./routes/profileUpdateRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const departmentRoutes = require('./routes/departmentRoutes');
 const productionChainRoutes = require('./routes/productionChainRoutes');
-const dailyTaskRoutes = require('./routes/dailyTaskRoutes');
+const assignmentRoutes = require('./routes/assignmentRoutes');
 
 // ============= MIDDLEWARE =============
 app.use(express.json());
@@ -50,11 +50,10 @@ app.use('/api/notifications', notificationRoutes);
 // Organization
 app.use('/api/departments', departmentRoutes);
 
+// Production Chains assignments (must be before the main production-chains router)
+app.use('/api/production-chains/assignments', assignmentRoutes);
 // Production Chains
 app.use('/api/production-chains', productionChainRoutes);
-
-// Daily Tasks
-app.use('/api/daily-tasks', dailyTaskRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

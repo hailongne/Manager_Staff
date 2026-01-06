@@ -26,15 +26,18 @@ export default function Layout() {
         {/* Menu chính */}
         <nav className="flex flex-col gap-3 text-xm font-medium">
           <SidebarItem to="/dashboard">Tổng quan</SidebarItem>
-          <SidebarItem to="/daily-tasks">Nhiệm vụ & Hằng ngày</SidebarItem>
           <SidebarItem to="/reports">Báo cáo</SidebarItem>
           {user?.role === "user" && (
             <SidebarItem to="/profile">Hồ sơ</SidebarItem>
           )}
+          <SidebarItem to="/assignments">📌 Công việc của tôi</SidebarItem>
           {(user?.role === "admin" || showManagerTools) && (
             <>
               <hr className="my-2 border-gray-300" />
               <SidebarItem to="/production-chains">🔗 Chuỗi sản xuất</SidebarItem>
+              <SidebarItem to="/production-chains/assign-week" matchPrefix>
+                📝 Giao việc tuần
+              </SidebarItem>
             </>
           )}
           {user?.role === "admin" && (
