@@ -68,6 +68,14 @@ const setupAssociations = (models) => {
   ChainKpi.hasMany(KpiCompletion, { foreignKey: 'chain_kpi_id', as: 'completions' });
   KpiCompletion.belongsTo(ChainKpi, { foreignKey: 'chain_kpi_id', as: 'kpi' });
 
+  // Assignments
+  if (models.ChainKpiAssignment) {
+    ChainKpi.hasMany(models.ChainKpiAssignment, { foreignKey: 'chain_kpi_id', as: 'assignments' });
+    models.ChainKpiAssignment.belongsTo(ChainKpi, { foreignKey: 'chain_kpi_id', as: 'kpi' });
+    models.ChainKpiAssignment.belongsTo(User, { foreignKey: 'assigned_to', as: 'assignee' });
+    User.hasMany(models.ChainKpiAssignment, { foreignKey: 'assigned_to' });
+  }
+
   KpiCompletion.belongsTo(User, { foreignKey: 'completed_by', as: 'completedBy' });
   User.hasMany(KpiCompletion, { foreignKey: 'completed_by' });
 

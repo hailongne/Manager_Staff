@@ -3,21 +3,27 @@ module.exports = function (roles) {
   const allowedRoles = Array.isArray(roles) ? roles : [roles];
 
   return (req, res, next) => {
+    console.log('RoleMiddleware check - User role:', req.user?.role, 'Allowed roles:', allowedRoles);
+
     // Check if user has one of the allowed roles
     if (allowedRoles.includes(req.user.role)) {
+      console.log('Role check passed for role:', req.user.role);
       return next();
     }
 
     // Special case: check if 'department_head' is allowed and user is a department head
     if (allowedRoles.includes('department_head') && isDepartmentHead(req.user)) {
+      console.log('Department head check passed');
       return next();
     }
 
     // Special case: check if 'leader' is allowed and user is a leader
     if (allowedRoles.includes('leader') && isDepartmentHead(req.user)) {
+      console.log('Leader department head check passed');
       return next();
     }
 
+    console.log('Role check failed, returning 403');
     return res.status(403).json({ message: 'Permission denied' });
   };
 };

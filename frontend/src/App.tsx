@@ -9,6 +9,8 @@ import Reports from "./pages/shared/reports";
 import Profile from "./pages/user/profile";
 import ProfileApprovals from "./pages/admin/profile-approvals";
 import ProductionChainsList from "./pages/admin/production-chains/ChainsList";
+import AssignWeek from "./pages/admin/production-chains/AssignWeek";
+import MyAssignments from "./pages/shared/MyAssignments";
 import Login from "./pages/login";
 import ChangePassword from "./pages/user/profile/change-password";
 
@@ -71,6 +73,31 @@ function AppContent() {
             </ManagerRoute>
           )}
         />
+        <Route
+          path="/production-chains/assign-week"
+          element={(
+            <ManagerRoute>
+              <AssignWeek />
+            </ManagerRoute>
+          )}
+        />
+        <Route
+          path="/production-chains/assign-week/:kpiId/:weekIndex"
+          element={(
+            <ManagerRoute>
+              <AssignWeek />
+            </ManagerRoute>
+          )}
+        />
+          <Route
+            path="/production-chains/assign-week/:chainId/:kpiId/:weekIndex"
+            element={(
+              <ManagerRoute>
+                <AssignWeek />
+              </ManagerRoute>
+            )}
+          />
+          <Route path="/assignments" element={<MyAssignments />} />
       </Route>
     </Routes>
   );

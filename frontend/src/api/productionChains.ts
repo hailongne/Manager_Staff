@@ -108,6 +108,8 @@ export interface ChainKpi {
   start_date?: string;
   end_date?: string;
   weeks?: KpiWeek[];
+  is_accumulated?: boolean;
+  accumulated_at?: string | null;
   creator?: {
     user_id: number;
     name: string;
@@ -220,6 +222,35 @@ export const toggleDayCompletion = async (
 // Get KPI completions
 export const getKpiCompletions = async (kpi_id: number): Promise<KpiCompletion[]> => {
   const { data } = await api.get(`/production-chains/kpis/${kpi_id}/completions`);
+  return data;
+};
+
+// Assign a whole week of KPI steps to employees
+export const assignWeek = async (kpi_id: number, week_index: number, assignments: { step_id: number; assigned_to: number; day_assignments?: Record<string, number> }[]) => {
+  const { data } = await api.post(`/production-chains/kpis/${kpi_id}/assign-week`, { week_index, assignments });
+  return data;
+};
+
+export const getAssignmentsForKpiWeek = async (kpi_id: number, week_index: number) => {
+  const { data } = await api.get(`/production-chains/kpis/${kpi_id}/assignments`, { params: { week_index } });
+  return data;
+};
+
+// Get assignments for current user
+export const getMyAssignments = async () => {
+  const { data } = await api.get('/production-chains/assignments/my');
+  return data;
+};
+
+export const postAssignmentDayResult = async (assignment_id: number, date: string, link: string, slotIndex?: number) => {
+  const payload: any = { date, link };
+  if (typeof slotIndex === 'number') payload.slotIndex = slotIndex;
+  const { data } = await api.post(`/production-chains/assignments/${assignment_id}/day-result`, payload);
+  return data;
+};
+
+export const acceptAssignment = async (assignment_id: number) => {
+  const { data } = await api.post(`/production-chains/assignments/${assignment_id}/accept`);
   return data;
 };
 

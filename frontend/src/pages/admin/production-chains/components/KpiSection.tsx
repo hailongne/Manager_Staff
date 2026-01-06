@@ -1,6 +1,6 @@
 import type { ChainKpi } from "../types";
 import { toggleDayCompletion } from "../../../../api/productionChains";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { KpiActions } from "./KpiActions";
 import { KpiSummary } from "./KpiSummary";
 import { KpiTable } from "./KpiTable";
@@ -62,6 +62,8 @@ export function KpiSection({
     const kpi = chainKpis.find(k => k.chain_kpi_id?.toString() === kpiId);
     setLocalSelectedKpi(kpi || null);
   };
+
+
 
   const formatDate = (dateStr: string | undefined) => {
     if (!dateStr) return '';
@@ -145,6 +147,7 @@ export function KpiSection({
             chainKpis={chainKpis}
             selectedKpiId={selectedKpiId}
             onKpiFilterChange={handleKpiFilterChange}
+            
           />
         </div>
       ) : (

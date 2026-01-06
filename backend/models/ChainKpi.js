@@ -37,11 +37,21 @@ const ChainKpi = sequelize.define('ChainKpi', {
     allowNull: true,
     defaultValue: null
   },
+  is_accumulated: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false
+  },
+  accumulated_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    defaultValue: null
+  },
   created_by: {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'user',
+      model: 'users',
       key: 'user_id'
     }
   }

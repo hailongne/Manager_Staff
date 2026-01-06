@@ -4,6 +4,10 @@
   "main": "index.js",
   "scripts": {
     "start": "node app.js",
+    "migrate:create-assignments": "node scripts/runMigrationCreateAssignments.js",
+    "migrate:add-day-results": "node scripts/runMigrationAddDayResults.js",
+    "migrate:add-day-titles": "node scripts/runMigrationAddDayTitles.js",
+    "migrate:add-accepted": "node scripts/runMigrationAddAccepted.js",
     "seed:fakedata": "node scripts/seedFakeData.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

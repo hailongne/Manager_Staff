@@ -8,6 +8,7 @@ const ProductionChainStep = require('./ProductionChainStep');
 const ProductionChainFeedback = require('./ProductionChainFeedback');
 const ChainKpi = require('./ChainKpi');
 const KpiCompletion = require('./KpiCompletion');
+const ChainKpiAssignment = require('./ChainKpiAssignment');
 
 // Timesheet
 const Timesheet = require('./Timesheet');
@@ -26,6 +27,7 @@ const models = {
   ProductionChainStep,
   ProductionChainFeedback,
   ChainKpi,
+  ChainKpiAssignment,
   KpiCompletion,
   Timesheet,
   Notification,
