@@ -242,8 +242,9 @@ export const getMyAssignments = async () => {
   return data;
 };
 
+export type PostAssignmentDayResultPayload = { date: string; link: string; slotIndex?: number };
 export const postAssignmentDayResult = async (assignment_id: number, date: string, link: string, slotIndex?: number) => {
-  const payload: any = { date, link };
+  const payload: PostAssignmentDayResultPayload = { date, link };
   if (typeof slotIndex === 'number') payload.slotIndex = slotIndex;
   const { data } = await api.post(`/production-chains/assignments/${assignment_id}/day-result`, payload);
   return data;

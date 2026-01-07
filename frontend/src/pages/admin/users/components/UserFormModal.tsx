@@ -137,9 +137,9 @@ export function UserFormModal({
           if (event.target === event.currentTarget && !submitting) onClose();
         }}
       >
-        <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-pink-100 overflow-hidden">
-          <header className="bg-gradient-to-r from-pink-100 via-pink-50 to-pink-100 px-6 py-4 border-b border-pink-100">
-            <h2 className="text-xl font-semibold text-pink-600">{title}</h2>
+        <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-orange-100 overflow-hidden">
+          <header className="bg-gradient-to-r from-orange-100 via-orange-50 to-orange-100 px-6 py-4 border-b border-orange-100">
+            <h2 className="text-xl font-semibold text-orange-600">{title}</h2>
             <p className="text-sm text-gray-500">Điền thông tin nhân sự để cập nhật hồ sơ.</p>
           </header>
 
@@ -153,7 +153,7 @@ export function UserFormModal({
                   <input
                     value={values.name}
                     onChange={handleChange("name")}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-200"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
                   />
                 </div>
                 <div>
@@ -163,7 +163,7 @@ export function UserFormModal({
                   <input
                     value={values.phone}
                     onChange={handleChange("phone")}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-200"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
                   />
                 </div>
                 <div>
@@ -174,7 +174,7 @@ export function UserFormModal({
                     type="email"
                     value={values.email}
                     onChange={handleChange("email")}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-200"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
                   />
                 </div>
                 <div>
@@ -184,7 +184,7 @@ export function UserFormModal({
                   <input
                     value={values.username}
                     onChange={handleChange("username")}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-200"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
                     placeholder="Có thể để trống để tự sinh"
                   />
                 </div>
@@ -195,7 +195,7 @@ export function UserFormModal({
                   <input
                     value={values.address}
                     onChange={handleChange("address")}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-200"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
                   />
                 </div>
                 <div>
@@ -222,7 +222,7 @@ export function UserFormModal({
                     ))}
                   </select>
                   {effectiveDepartmentOptions.length === 0 ? (
-                    <p className="mt-1 text-xs text-purple-500">
+                    <p className="mt-1 text-xs text-orange-600">
                       Chưa có phòng ban. Hãy tạo phòng ban trước khi thêm nhân viên.
                     </p>
                   ) : null}
@@ -250,8 +250,8 @@ export function UserFormModal({
                             className={classNames(
                               "inline-flex items-baseline gap-2 rounded-lg border px-3 py-2 text-left transition",
                               option.isCurrentSelection
-                                ? "border-pink-400 bg-white text-pink-700 shadow-sm"
-                                : "border-pink-100 bg-white text-pink-600 hover:border-pink-300 hover:bg-pink-50",
+                                ? "border-orange-400 bg-white text-orange-700 shadow-sm"
+                                : "border-orange-100 bg-white text-orange-600 hover:border-orange-300 hover:bg-orange-50",
                               option.disabled || submitting
                                 ? "cursor-not-allowed opacity-60"
                                 : "cursor-pointer"
@@ -262,9 +262,9 @@ export function UserFormModal({
                               className={classNames(
                                 "text-[11px] font-medium whitespace-nowrap",
                                 option.remaining > 0
-                                  ? "text-pink-500"
+                                  ? "text-orange-500"
                                   : option.isCurrentSelection
-                                    ? "text-pink-600"
+                                    ? "text-orange-600"
                                     : "text-red-500"
                               )}
                             >
@@ -274,7 +274,7 @@ export function UserFormModal({
                         ))}
                       </div>
                     ) : (
-                      <p className="mt-1 text-xs text-purple-500">
+                      <p className="mt-1 text-xs text-orange-600">
                         Phòng ban chưa có chức vụ gợi ý. Hãy thêm trong phần Phòng ban.
                       </p>
                     )
@@ -297,7 +297,7 @@ export function UserFormModal({
                   <label className="block text-sm font-medium text-gray-600 mb-1">
                     Trạng thái <span className="text-red-600">*</span>
                   </label>
-                  <select
+                    <select
                     value={values.employment_status}
                     onChange={handleChange("employment_status")}
                     className="ms-select w-full"
@@ -311,7 +311,7 @@ export function UserFormModal({
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">Vai trò</label>
-                  <select
+                    <select
                     value={values.role}
                     onChange={handleChange("role")}
                     className="ms-select w-full"
@@ -333,71 +333,71 @@ export function UserFormModal({
                   <label className="block text-sm font-medium text-gray-600 mb-1">
                     Giờ vào ca <span className="text-red-600">*</span>
                   </label>
-                  <input
+                    <input
                     type="time"
                     value={values.work_shift_start}
                     onChange={handleChange("work_shift_start")}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-200"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">
                     Giờ tan ca <span className="text-red-600">*</span>
                   </label>
-                  <input
+                    <input
                     type="time"
                     value={values.work_shift_end}
                     onChange={handleChange("work_shift_end")}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-200"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">
                     Số ngày nghỉ phép năm <span className="text-red-600">*</span>
                   </label>
-                  <input
+                    <input
                     type="number"
                     min="0"
                     step="0.5"
                     value={values.annual_leave_quota}
                     onChange={handleChange("annual_leave_quota")}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-200"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">
                     Số ngày còn lại <span className="text-red-600">*</span>
                   </label>
-                  <input
+                    <input
                     type="number"
                     min="0"
                     step="0.5"
                     value={values.remaining_leave_days}
                     onChange={handleChange("remaining_leave_days")}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-200"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">
                     Ngày vào làm <span className="text-red-600">*</span>
                   </label>
-                  <input
+                    <input
                     type="date"
                     value={values.date_joined}
                     onChange={handleChange("date_joined")}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-200"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-1">
                     Mật khẩu tạm (tùy chọn)
                   </label>
-                  <input
+                    <input
                     type="text"
                     value={values.password}
                     onChange={handleChange("password")}
                     placeholder="Để trống để dùng mặc định"
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-200"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
                   />
                 </div>
               </section>
@@ -408,12 +408,12 @@ export function UserFormModal({
                   value={values.note}
                   onChange={handleChange("note")}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-200 resize-none"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200 resize-none"
                 />
               </div>
             </div>
 
-            <footer className="flex justify-end gap-3 border-t border-pink-300 px-6 py-4">
+            <footer className="flex justify-end gap-3 border-t border-orange-300 px-6 py-4">
               <button
                 type="button"
                 onClick={onClose}
@@ -425,7 +425,7 @@ export function UserFormModal({
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-4 py-2 rounded-lg bg-pink-500 text-white hover:bg-pink-600 disabled:opacity-60"
+                className="px-4 py-2 rounded-lg bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-60"
               >
                 {submitting ? "Đang lưu..." : "Lưu tài khoản"}
               </button>

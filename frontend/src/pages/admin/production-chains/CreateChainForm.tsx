@@ -3,7 +3,7 @@ import { createProductionChain } from "../../../api/productionChains";
 import type { ProductionChainStep } from "../../../api/productionChains";
 import { getDepartments } from "../../../api/departments";
 import { useModalToast } from "../../../hooks/useToast";
-import { Plus, Trash2, ArrowRight, Users, FileText, CheckCircle } from "lucide-react";
+import { Trash2, ArrowRight, Users, FileText, CheckCircle, Rocket } from "lucide-react";
 
 interface Department {
   department_id: number;
@@ -176,7 +176,7 @@ export function CreateChainForm({ onChainCreated, hasCompletions = false }: Crea
     <div className="w-full max-w-none space-y-8">
       {/* Header Section */}
       <div className="text-center">
-        <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl shadow-lg mb-4 bg-gradient-to-br from-pink-300 to-rose-300`}>
+        <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl shadow-lg mb-4 bg-gradient-to-br from-orange-300 to-orange-200`}>
           <FileText className="w-8 h-8 text-white" />
         </div>
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
@@ -189,7 +189,7 @@ export function CreateChainForm({ onChainCreated, hasCompletions = false }: Crea
 
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-pink-300 to-rose-300 px-6 py-4">
+          <div className="bg-gradient-to-r from-orange-300 to-orange-200 px-6 py-4">
             <h3 className="text-lg font-semibold text-white flex items-center gap-2">
               <FileText className="w-5 h-5" />
               Thông Tin Cơ Bản
@@ -209,7 +209,7 @@ export function CreateChainForm({ onChainCreated, hasCompletions = false }: Crea
                 className={`w-full rounded-xl border px-4 py-3 text-sm transition-all duration-200 ${
                   errors.name
                     ? "border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200"
-                    : "border-gray-200 bg-gray-50 focus:border-pink-400 focus:ring-pink-200 focus:bg-white"
+                    : "border-gray-200 bg-gray-50 focus:border-orange-400 focus:ring-orange-200 focus:bg-white"
                 } focus:outline-none focus:ring-2`}
                 required
               />
@@ -232,7 +232,7 @@ export function CreateChainForm({ onChainCreated, hasCompletions = false }: Crea
                 className={`w-full rounded-xl border px-4 py-3 text-sm transition-all duration-200 resize-none ${
                   errors.description
                     ? "border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200"
-                    : "border-gray-200 bg-gray-50 focus:border-pink-400 focus:ring-pink-200 focus:bg-white"
+                    : "border-gray-200 bg-gray-50 focus:border-orange-400 focus:ring-orange-200 focus:bg-white"
                 } focus:outline-none focus:ring-2`}
                 rows={4}
               />
@@ -242,7 +242,7 @@ export function CreateChainForm({ onChainCreated, hasCompletions = false }: Crea
 
         {/* Steps Section */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-sky-300 to-indigo-300 px-6 py-4">
+          <div className="bg-gradient-to-r from-orange-300 to-orange-200 px-6 py-4">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                 <ArrowRight className="w-5 h-5" />
@@ -252,11 +252,13 @@ export function CreateChainForm({ onChainCreated, hasCompletions = false }: Crea
                 type="button"
                 onClick={addStep}
                 disabled={hasCompletions}
-                className={`inline-flex items-center justify-center transition-opacity duration-200
-                  ${hasCompletions ? 'opacity-40 cursor-not-allowed' : 'text-white hover:opacity-80'}
-                `}
+                className={`inline-flex items-center rounded-full overflow-hidden shadow-sm transition ${hasCompletions ? 'opacity-50 cursor-not-allowed' : ''}`}
+                style={{ background: 'linear-gradient(90deg, #fb923c 0%, #fb7a2d 100%)' }}
               >
-                <Plus size={28} strokeWidth={2.5} />
+                <span className="px-4 py-2 text-2sm font-medium text-white">Thêm phòng ban</span>
+                <span className="w-7 h-7 mr-1 bg-white flex items-center justify-center rounded-full">
+                  <Rocket className="w-4 h-4 text-orange-500" />
+                </span>
               </button>
             </div>
           </div>
@@ -278,7 +280,7 @@ export function CreateChainForm({ onChainCreated, hasCompletions = false }: Crea
                   {/* Step Header */}
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-indigo-400 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                      <div className="w-8 h-8 bg-gradient-to-br from-orange-300 to-orange-400 rounded-full flex items-center justify-center text-white font-bold text-sm">
                         {step.step_order}
                       </div>
                       <div>
@@ -315,7 +317,7 @@ export function CreateChainForm({ onChainCreated, hasCompletions = false }: Crea
                           className={`w-full rounded-lg border px-3 py-2.5 text-sm transition-all duration-200 ${hasCompletions ? 'opacity-50 cursor-not-allowed' : ''} ${
                             errors[`step_${index}_department`]
                               ? "border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200"
-                              : "border-gray-200 bg-white focus:border-blue-400 focus:ring-blue-200"
+                              : "border-gray-200 bg-white focus:border-orange-400 focus:ring-orange-200"
                           } focus:outline-none focus:ring-2`}
                           required
                         >
@@ -347,7 +349,7 @@ export function CreateChainForm({ onChainCreated, hasCompletions = false }: Crea
                           className={`w-full rounded-lg border px-3 py-2.5 text-sm transition-all duration-200 ${
                             errors[`step_${index}_title`]
                               ? "border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200"
-                              : "border-gray-200 bg-white focus:border-blue-400 focus:ring-blue-200"
+                                : "border-gray-200 bg-white focus:border-orange-400 focus:ring-orange-200"
                           } focus:outline-none focus:ring-2`}
                           required
                         />
@@ -399,18 +401,23 @@ export function CreateChainForm({ onChainCreated, hasCompletions = false }: Crea
             <button
               type="submit"
               disabled={loading}
-              className={`inline-flex items-center gap-3 text-white px-8 py-4 rounded-xl text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 bg-gradient-to-r from-pink-300 to-rose-300 hover:from-pink-200 hover:to-rose-200 disabled:from-gray-400 disabled:to-gray-500`}
+              className={`inline-flex items-center rounded-full overflow-hidden shadow-sm transition ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              style={{ background: 'linear-gradient(90deg, #fb923c 0%, #fb7a2d 100%)' }}
             >
               {loading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  Đang Tạo Chuỗi...
-                </>
+              <>
+                <span className="px-4 py-2 text-2sm font-medium text-white">Đang Tạo Chuỗi...</span>
+                <span className="w-7 h-7 mr-1 bg-white flex items-center justify-center rounded-full">
+                <div className="w-4 h-4 border-2 border-orange-300 border-t-transparent rounded-full animate-spin" />
+                </span>
+              </>
               ) : (
-                <>
-                  <CheckCircle className="w-5 h-5" />
-                  Tạo Chuỗi Sản Xuất
-                </>
+              <>
+                <span className="px-4 py-2 text-2sm font-medium text-white">Tạo Chuỗi Sản Xuất</span>
+                <span className="w-7 h-7 mr-1 bg-white flex items-center justify-center rounded-full">
+                <CheckCircle className="w-4 h-4 text-orange-500" />
+                </span>
+              </>
               )}
             </button>
           </div>

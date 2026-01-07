@@ -373,6 +373,28 @@ export function useUsers() {
   // ============================================================
   // CRUD Handlers
   // ============================================================
+  
+  // Upload CV handler
+  const handleUploadCv = async (target: ApiUser, file: File): Promise<ApiUser | void> => {
+    try {
+      setSubmitting(true);
+      const { uploadCv } = await import('../../../../api/users');
+      const res = await uploadCv(target.user_id, file);
+      const normalized = normalizeUserRecord(res.user);
+      const adjusted = applyDepartmentAdjustments([normalized])[0];
+      setUsers((prev) => prev.map((u) => (u.user_id === adjusted.user_id ? adjusted : u)));
+      setMessage({ type: 'success', text: 'Đã tải lên CV' });
+      // Return updated user so callers (modal) can refresh selectedUser
+      return adjusted;
+    } catch (err) {
+      const msg = resolveErrorMessage(err, 'Không thể tải CV lên');
+      setMessage({ type: 'error', text: msg });
+      return undefined;
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
 
   const handleCreate = async (values: FormState) => {
     setSubmitting(true);
@@ -793,6 +815,7 @@ export function useUsers() {
     handleCreate,
     handleUpdate,
     handleDelete,
+    handleUploadCv,
     handleDepartmentModalSubmit,
     handleDepartmentDelete,
 

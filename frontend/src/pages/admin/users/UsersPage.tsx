@@ -71,6 +71,7 @@ export default function UsersPage() {
     handleCreate,
     handleUpdate,
     handleDelete,
+    handleUploadCv,
     handleDepartmentModalSubmit,
     handleDepartmentDelete,
 
@@ -97,9 +98,9 @@ export default function UsersPage() {
         ? "bg-emerald-50 text-emerald-600"
         : status === "probation"
           ? "bg-amber-50 text-amber-600"
-          : status === "resigned"
+            : status === "resigned"
             ? "bg-gray-100 text-gray-500"
-            : "bg-pink-50 text-pink-600";
+            : "bg-orange-50 text-orange-600";
     return (
       <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${tone}`}>
         {label}
@@ -123,7 +124,7 @@ export default function UsersPage() {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center text-gray-500">
-          <div className="animate-spin h-10 w-10 border-4 border-pink-200 border-t-pink-500 rounded-full mx-auto" />
+          <div className="animate-spin h-10 w-10 border-4 border-orange-200 border-t-orange-500 rounded-full mx-auto" />
           <p className="mt-4">Đang tải danh sách nhân viên...</p>
         </div>
       </div>
@@ -141,7 +142,6 @@ export default function UsersPage() {
       email: user.email,
       username: user.username,
       phone: user.phone,
-      position: user.position,
       department_id: user.department_id ?? null,
       department: user.department ?? null,
       department_position: user.department_position ?? null,
@@ -168,7 +168,7 @@ export default function UsersPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-xl font-semibold text-pink-600">{pageTitle}</h1>
+          <h1 className="text-xl font-semibold text-orange-600">{pageTitle}</h1>
           <p className="text-sm text-gray-500">{pageSubtitle}</p>
           {!isAdmin && isDepartmentHead ? (
             <p className="mt-1 text-xs text-gray-500">
@@ -181,7 +181,7 @@ export default function UsersPage() {
             <button
               type="button"
               onClick={openDepartmentModal}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-pink-500 text-white hover:bg-pink-600 text-sm"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-orange-500 text-white hover:bg-orange-600 text-sm"
             >
               <span>Quản lý phòng ban</span>
             </button>
@@ -213,7 +213,7 @@ export default function UsersPage() {
 
       {/* User Table Header */}
       <div className="px-5 pb-2">
-        <h2 className="text-sm font-semibold text-gray-700 uppercase">Tài khoản nhân viên</h2>
+        <h2 className="text-sm font-semibold text-orange-600 uppercase">Tài khoản nhân viên</h2>
         <p className="text-xs text-gray-500">
           Quản lý quyền truy cập hệ thống và phân công vai trò.
         </p>
@@ -228,6 +228,7 @@ export default function UsersPage() {
         canDeleteAccount={canDeleteAccount}
         isAdmin={isAdmin}
         onEdit={openEditModal}
+        onUploadCv={handleUploadCv}
         onDelete={openDeleteDialog}
         onAddUser={openCreateUserModal}
         renderStatusBadge={renderStatusBadge}

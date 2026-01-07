@@ -124,6 +124,7 @@ export interface UserTableProps {
   canDeleteAccount: (item: ApiUser) => boolean;
   isAdmin: boolean;
   onEdit: (user: ApiUser) => void;
+  onUploadCv?: (user: ApiUser, file: File) => Promise<ApiUser | void>;
   onDelete: (user: ApiUser) => void;
   onAddUser: () => void;
   renderStatusBadge: (status: string | null | undefined) => React.ReactNode;

@@ -11,6 +11,7 @@ process.on('uncaughtException', err => {
 });
 
 const app = express();
+const path = require('path');
 const sequelize = require('./config/db');
 const { port } = require('./config/app');
 const { notFoundHandler, errorHandler } = require('./middleware/errorMiddleware');
@@ -37,6 +38,9 @@ app.use('/api/auth', authRoutes);
 
 // Users
 app.use('/api/users', userRoutes);
+
+// Serve uploaded files (avatars, cvs)
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
 // Time Management
 app.use('/api/timesheets', timesheetRoutes);

@@ -10,7 +10,7 @@ const instance = axios.create({
 });
 
 const SESSION_LOGOUT_REASON_KEY = 'session_logout_reason';
-const SESSION_EXPIRED_MESSAGE = 'Bạn đã hết phiên đăng nhập. Vui lòng đăng nhập lại.';
+const SESSION_EXPIRED_MESSAGE = 'Hết phiên đăng nhập. Vui lòng đăng nhập lại.';
 
 // Xóa dữ liệu session
 const clearSession = () => {

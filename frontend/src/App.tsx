@@ -3,6 +3,7 @@ import Layout from "./components/layout/Layout";
 import RouteGuard from "./components/RouteGuard";
 import AdminRoute from "./components/routes/AdminRoute";
 import ManagerRoute from "./components/routes/ManagerRoute";
+import LeaderRoute from "./components/routes/LeaderRoute";
 import Dashboard from "./pages/shared/dashboard";
 import Users from "./pages/admin/users";
 import Reports from "./pages/shared/reports";
@@ -76,25 +77,25 @@ function AppContent() {
         <Route
           path="/production-chains/assign-week"
           element={(
-            <ManagerRoute>
+            <LeaderRoute>
               <AssignWeek />
-            </ManagerRoute>
+            </LeaderRoute>
           )}
         />
         <Route
           path="/production-chains/assign-week/:kpiId/:weekIndex"
           element={(
-            <ManagerRoute>
+            <LeaderRoute>
               <AssignWeek />
-            </ManagerRoute>
+            </LeaderRoute>
           )}
         />
           <Route
             path="/production-chains/assign-week/:chainId/:kpiId/:weekIndex"
             element={(
-              <ManagerRoute>
+              <LeaderRoute>
                 <AssignWeek />
-              </ManagerRoute>
+              </LeaderRoute>
             )}
           />
           <Route path="/assignments" element={<MyAssignments />} />

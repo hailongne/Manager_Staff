@@ -19,14 +19,14 @@ export default function SidebarItem({ to, children, matchPrefix = false }: Sideb
   return (
     <Link
       to={to}
-      className={`px-4 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2 ${
+      className={`relative flex items-center gap-3 px-4 py-3 rounded-md transition-colors duration-150 ${
         isActive
-          ? "bg-pink-600 text-white font-semibold shadow"
-          : "hover:bg-pink-100 hover:text-pink-700"
+          ? "bg-orange-50 text-orange-700 font-semibold"
+          : "text-gray-700 hover:bg-orange-50 hover:text-orange-700"
       }`}
-      style={{ fontWeight: "500" }}
     >
-      {children}
+      {isActive && <span className="absolute left-0 top-0 bottom-0 w-1 bg-orange-600 rounded-r-md" />}
+      <span className="truncate">{children}</span>
     </Link>
   );
 }

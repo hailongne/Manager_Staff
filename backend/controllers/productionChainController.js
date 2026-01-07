@@ -4,6 +4,9 @@
  */
 
 const { ProductionChain, ProductionChainStep, ChainKpi, KpiCompletion, Department, User, ChainKpiAssignment } = require('../models');
+// Some deployments may not have a Task model; require models object and read Task if present
+const _models = require('../models');
+const Task = _models.Task || null;
 const { HTTP_STATUS } = require('../utils/constants');
 const { Op } = require('sequelize');
 const { calculateKpiDistribution } = require('../utils/kpiHelpers');
@@ -405,7 +408,10 @@ exports.deleteChain = async (req, res) => {
 
     // Delete associated data
     await ProductionChainStep.destroy({ where: { chain_id } });
-    await Task.destroy({ where: { chain_id } });
+    // If Task model is available, delete related tasks; otherwise skip
+    if (Task && typeof Task.destroy === 'function') {
+      await Task.destroy({ where: { chain_id } });
+    }
     await ChainKpi.destroy({ where: { chain_id } });
 
     await chain.destroy();
@@ -560,7 +566,11 @@ exports.startChain = async (req, res) => {
       return res.status(400).json({ message: 'Phòng ban không có nhân viên' });
     }
 
-    // Create first task
+    // Create first task (only if Task model exists)
+    if (!Task) {
+      return res.status(500).json({ message: 'Task feature is not available on this server' });
+    }
+
     const task = await Task.create({
       user_id: departmentUser.user_id,
       title: title || firstStep.title,
@@ -709,16 +719,24 @@ exports.deleteChain = async (req, res) => {
       return res.status(404).json({ message: 'Chuỗi sản xuất không tồn tại' });
     }
 
-    const chainName = chain.name;
-    const chainSteps = await ProductionChainStep.findAll({
-      where: { chain_id },
-      attributes: ['department_id']
-    });
-    const departmentIds = chainSteps.map((step) => step.department_id).filter(Boolean);
+    // Prevent deletion if there are KPI completions
+    const chainKpis = await ChainKpi.findAll({ where: { chain_id } });
+    const kpiIds = chainKpis.map(k => k.chain_kpi_id);
+    const hasCompletions = await KpiCompletion.findOne({ where: { chain_kpi_id: kpiIds } });
+    if (hasCompletions) {
+      return res.status(400).json({ message: 'Không thể xóa chuỗi đã có dữ liệu hoàn thành KPI' });
+    }
 
-    // Delete associated steps and tasks
+    const chainName = chain.name;
+    const chainSteps = await ProductionChainStep.findAll({ where: { chain_id }, attributes: ['department_id'] });
+    const departmentIds = chainSteps.map(s => s.department_id).filter(Boolean);
+
+    // Delete associated data
     await ProductionChainStep.destroy({ where: { chain_id } });
-    await Task.destroy({ where: { production_chain_id: chain_id } });
+    if (Task && typeof Task.destroy === 'function') {
+      await Task.destroy({ where: { production_chain_id: chain_id } });
+    }
+    await ChainKpi.destroy({ where: { chain_id } });
 
     // Delete chain
     await chain.destroy();
@@ -729,10 +747,7 @@ exports.deleteChain = async (req, res) => {
         type: 'chain_kpi',
         title: 'Chuỗi sản xuất bị gỡ',
         message: `${actorLabel} vừa xóa chuỗi "${chainName}" liên quan tới phòng ban của bạn`,
-        metadata: {
-          chain_id,
-          event: 'deleted'
-        },
+        metadata: { chain_id, event: 'deleted' },
         entityType: 'production_chain',
         entityId: Number(chain_id)
       }));
@@ -741,10 +756,7 @@ exports.deleteChain = async (req, res) => {
         type: 'chain_kpi',
         title: 'Chuỗi sản xuất bị gỡ',
         message: `${actorLabel} đã xóa chuỗi "${chainName}".`,
-        metadata: {
-          chain_id,
-          event: 'deleted'
-        },
+        metadata: { chain_id, event: 'deleted' },
         entityType: 'production_chain',
         entityId: Number(chain_id)
       });

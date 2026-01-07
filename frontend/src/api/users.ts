@@ -9,7 +9,8 @@ export interface User {
   email?: string;
   username?: string;
   phone?: string;
-  position?: string;
+  avatar_url?: string | null;
+  cv_url?: string | null;
   department_id?: number | null;
   department?: string | null;
   department_position?: string | null;
@@ -32,7 +33,8 @@ export interface CreateUserPayload {
   username?: string;
   role?: "admin" | "user" | "leader";
   phone?: string;
-  position?: string;
+  avatar_url?: string;
+  cv_url?: string;
   department_id?: number | null;
   department?: string | null;
   department_position?: string | null;
@@ -71,6 +73,15 @@ export interface DeleteUserResponse {
 export const createUser = async (payload: CreateUserPayload): Promise<CreateUserResponse> => (await api.post("/users", payload)).data;
 export const updateUser = async (id: number, payload: UpdateUserPayload): Promise<UpdateUserResponse> => (await api.put(`/users/${id}`, payload)).data;
 export const deleteUser = async (id: number): Promise<DeleteUserResponse> => (await api.delete(`/users/${id}`)).data;
+
+export const uploadCv = async (id: number, file: File): Promise<{ message: string; user: User; cv_url: string }> => {
+  const fd = new FormData();
+  fd.append('cv', file);
+  const res = await api.post(`/users/${id}/cv`, fd, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return res.data;
+};
 
 export interface ChangePasswordPayload {
   currentPassword: string;

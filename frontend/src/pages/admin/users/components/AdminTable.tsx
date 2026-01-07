@@ -24,13 +24,6 @@ export function AdminTable({
 }: AdminTableProps) {
   return (
     <section className="mb-6">
-      <div className="px-5 pb-2 mt-5">
-        <h2 className="text-sm font-semibold text-gray-700 uppercase">Tài khoản quản trị</h2>
-        <p className="text-xs text-gray-500">
-          Quản lý quyền truy cập hệ thống và phân công vai trò.
-        </p>
-      </div>
-
       <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
         {admins.length === 0 ? (
           <div className="px-4 py-6 text-sm text-gray-500">
@@ -44,13 +37,13 @@ export function AdminTable({
                 <th className="px-4 py-3 text-left font-semibold">Liên hệ</th>
                 <th className="px-4 py-3 text-left font-semibold">Trạng thái làm việc</th>
                 <th className="px-4 py-3 text-right font-semibold">
-                  <button
-                    onClick={onAddAdmin}
-                    className="inline-flex items-center gap-2 px-2 py-2 rounded-lg border border-purple-200 text-purple-600 hover:bg-purple-100"
-                  >
-                    <span>Thêm quản trị viên</span>
-                  </button>
-                </th>
+                    <button
+                      onClick={onAddAdmin}
+                      className="inline-flex items-center gap-2 px-2 py-2 rounded-lg border border-orange-200 text-orange-600 hover:bg-orange-100"
+                    >
+                      <span>Thêm quản trị viên</span>
+                    </button>
+                  </th>
               </tr>
             </thead>
             <tbody>
@@ -72,7 +65,7 @@ export function AdminTable({
                 }
 
                 return (
-                  <tr key={item.user_id} className="border-t border-gray-100 hover:bg-purple-50/30">
+                  <tr key={item.user_id} className="border-t border-gray-100 hover:bg-orange-50/30">
                     <td className="px-4 py-3">
                       <p className="font-semibold text-gray-800">{item.name}</p>
                       <p className="text-xs text-gray-500">Mã: #{item.user_id}</p>
@@ -99,7 +92,7 @@ export function AdminTable({
                       <div className="flex justify-end gap-2">
                         <button
                           onClick={() => onEdit(item)}
-                          className="px-3 py-1.5 text-xs rounded-lg border border-pink-200 text-pink-600 hover:bg-pink-50"
+                          className="px-3 py-1.5 text-xs rounded-lg border border-orange-200 text-orange-600 hover:bg-orange-50"
                         >
                           Chỉnh sửa
                         </button>

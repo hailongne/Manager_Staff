@@ -30,10 +30,6 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING, 
     allowNull: true 
   },
-  position: { 
-    type: DataTypes.STRING, 
-    allowNull: true 
-  },
   department_id: { 
     type: DataTypes.INTEGER, 
     allowNull: true 
@@ -49,6 +45,14 @@ const User = sequelize.define('User', {
   address: { 
     type: DataTypes.STRING, 
     allowNull: true 
+  },
+  avatar_url: {
+    type: DataTypes.STRING(1024),
+    allowNull: true
+  },
+  cv_url: {
+    type: DataTypes.STRING(1024),
+    allowNull: true
   },
   date_joined: { 
     type: DataTypes.DATEONLY, 

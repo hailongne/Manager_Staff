@@ -254,14 +254,15 @@ export function KpiCreateModal({ isOpen, chain, onClose, onSuccess }: KpiCreateM
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4 py-6 animate-in fade-in duration-200">
       <div ref={modalRef} className="w-full max-w-4xl max-h-[95vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-100 flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between bg-gradient-to-r from-sky-100 via-sky-50 to-green-200 px-8 py-6 text-white border-b border-sky-200 flex-shrink-0">
+        <div className="flex items-center justify-between bg-gradient-to-r from-orange-100 to-orange-200 px-8 py-6 border-b border-orange-100 flex-shrink-0">
           <div>
-            <h2 className="text-2xl font-bold text-sky-800">Ban Hành KPI</h2>
-            <p className="text-sky-600 text-sm mt-1">Thiết lập mục tiêu KPI cho chuỗi sản xuất</p>
+            <h2 className="text-2xl font-bold text-orange-800">Ban Hành KPI</h2>
+            <p className="text-orange-600 text-sm mt-1">Thiết lập mục tiêu KPI cho chuỗi sản xuất</p>
           </div>
           <button
             onClick={onClose}
-            className="rounded-full p-2 text-sky-600 hover:bg-sky-200 hover:text-sky-800 transition-all duration-200"
+            className="rounded-full p-2 text-orange-600 hover:bg-orange-100 hover:text-orange-800 transition-all duration-200"
+            aria-label="Đóng"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -273,25 +274,25 @@ export function KpiCreateModal({ isOpen, chain, onClose, onSuccess }: KpiCreateM
         <div className="flex-1 overflow-y-auto">
           <form className="p-8 space-y-8">
             {/* Chain Info */}
-            <div className="bg-gradient-to-r from-gray-50 to-sky-50 rounded-xl p-6 border border-sky-300">
+            <div className="bg-gradient-to-r from-white to-orange-50 rounded-xl p-6 border border-orange-200">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-sky-100 rounded-full flex items-center justify-center">
-                  <svg className="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">{chain.name}</h3>
-                  <p className="text-sm text-gray-600">Chuỗi sản xuất</p>
+                  <p className="text-sm text-orange-600">Chuỗi sản xuất</p>
                 </div>
               </div>
             </div>
 
             {/* Time Period Section */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-              <div className="bg-gradient-to-r from-sky-300 to-teal-200 px-6 py-4">
-                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                  <Clock className="w-5 h-5" />
+              <div className="bg-gradient-to-r from-orange-300 to-orange-200 px-6 py-4">
+                <h3 className="text-lg font-semibold text-orange-900 flex items-center gap-2">
+                  <Clock className="w-5 h-5 text-orange-700" />
                   Thời Hạn Hoàn Thành
                 </h3>
               </div>
@@ -318,8 +319,8 @@ export function KpiCreateModal({ isOpen, chain, onClose, onSuccess }: KpiCreateM
                         onClick={() => handlePresetChange(preset.value)}
                         className={`p-3 rounded-lg border-2 text-xs font-medium transition-all duration-200 ${
                           selectedPreset === preset.value
-                            ? "border-green-400 bg-green-50 text-green-700"
-                            : "border-gray-200 bg-white hover:border-green-300 hover:bg-green-50 text-gray-700"
+                            ? "border-orange-400 bg-orange-50 text-orange-700"
+                            : "border-gray-200 bg-white hover:border-orange-300 hover:bg-orange-50 text-gray-700"
                         }`}
                       >
                         {preset.label}
@@ -342,14 +343,14 @@ export function KpiCreateModal({ isOpen, chain, onClose, onSuccess }: KpiCreateM
                         className={`w-full rounded-xl border-2 px-4 py-3.5 text-base font-medium transition-all duration-300 cursor-pointer shadow-sm ${
                           errors.startDate
                             ? "border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200 focus:shadow-red-100"
-                            : "border-gray-200 bg-gradient-to-r from-white to-gray-50/50 hover:border-green-300 hover:shadow-green-100 focus:border-green-400 focus:ring-green-200 focus:shadow-green-100 focus:bg-green-50/30"
+                            : "border-gray-200 bg-gradient-to-r from-white to-gray-50/50 hover:border-orange-300 hover:shadow-orange-100 focus:border-orange-400 focus:ring-orange-200 focus:shadow-orange-100 focus:bg-orange-50/30"
                         } focus:outline-none focus:ring-2 group-hover:shadow-lg`}
                         required
                       />
                     </div>
                     {startDate && (
-                      <div className="mt-3 p-3 bg-sky-50 border border-sky-200 rounded-lg">
-                        <p className="text-sm text-sky-700 font-medium flex items-center gap-2">
+                      <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                        <p className="text-sm text-orange-700 font-medium flex items-center gap-2">
                           <span className="text-lg">📅</span>
                           {new Date(startDate).toLocaleDateString('vi-VN', {
                             weekday: 'long',
@@ -380,14 +381,14 @@ export function KpiCreateModal({ isOpen, chain, onClose, onSuccess }: KpiCreateM
                         className={`w-full rounded-xl border-2 px-4 py-3.5 text-base font-medium transition-all duration-300 cursor-pointer shadow-sm ${
                           errors.endDate
                             ? "border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200 focus:shadow-red-100"
-                            : "border-gray-200 bg-gradient-to-r from-white to-gray-50/50 hover:border-green-300 hover:shadow-green-100 focus:border-green-400 focus:ring-green-200 focus:shadow-green-100 focus:bg-green-50/30"
+                            : "border-gray-200 bg-gradient-to-r from-white to-gray-50/50 hover:border-orange-300 hover:shadow-orange-100 focus:border-orange-400 focus:ring-amber-200 focus:shadow-amber-100 focus:bg-amber-50/30"
                         } focus:outline-none focus:ring-2 group-hover:shadow-lg`}
                         required
                       />
                     </div>
                     {endDate && (
-                      <div className="mt-3 p-3 bg-sky-50 border border-sky-200 rounded-lg">
-                        <p className="text-sm text-sky-700 font-medium flex items-center gap-2">
+                      <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                        <p className="text-sm text-amber-700 font-medium flex items-center gap-2">
                           <span className="text-lg">🎯</span>
                           {new Date(endDate).toLocaleDateString('vi-VN', {
                             weekday: 'long',
@@ -428,7 +429,7 @@ export function KpiCreateModal({ isOpen, chain, onClose, onSuccess }: KpiCreateM
                       className={`w-full rounded-xl border-2 px-4 py-3.5 text-base font-medium transition-all duration-300 shadow-sm [appearance-none] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
                         errors.totalKPI
                           ? "border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200 focus:shadow-red-100"
-                          : "border-gray-200 bg-gradient-to-r from-white to-gray-50/50 hover:border-green-300 hover:shadow-green-100 focus:border-green-400 focus:ring-green-200 focus:shadow-green-100 focus:bg-green-50/30"
+                          : "border-gray-200 bg-gradient-to-r from-white to-gray-50/50 hover:border-amber-300 hover:shadow-amber-100 focus:border-amber-400 focus:ring-amber-200 focus:shadow-amber-100 focus:bg-amber-50/30"
                       } focus:outline-none focus:ring-2`}
                       required
                     />
@@ -446,12 +447,12 @@ export function KpiCreateModal({ isOpen, chain, onClose, onSuccess }: KpiCreateM
 
                 {/* Duration Preview */}
                 {startDate && endDate && (
-                  <div className="bg-sky-50 border border-sky-200 rounded-lg p-4 space-y-3">
-                    <div className="flex items-center gap-2 text-sky-700">
-                      <CheckCircle className="w-5 h-5" />
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
+                    <div className="flex items-center gap-2 text-amber-700">
+                      <CheckCircle className="w-5 h-5 text-amber-700" />
                       <span className="font-medium">Thời hạn KPI:</span>
                     </div>
-                    <p className="text-sm text-sky-600">
+                    <p className="text-sm text-amber-600">
                       Từ {new Date(startDate).toLocaleDateString('vi-VN')} đến {new Date(endDate).toLocaleDateString('vi-VN')}
                       <span className="ml-2 font-medium">
                         ({kpiBreakdown.totalDays} ngày)
@@ -459,22 +460,22 @@ export function KpiCreateModal({ isOpen, chain, onClose, onSuccess }: KpiCreateM
                     </p>
 
                     {totalKPI > 0 && startDate && endDate && (
-                      <div className="border-t border-sky-200 pt-3">
-                        <div className="flex items-center gap-2 text-sky-700 mb-2">
+                      <div className="border-t border-amber-200 pt-3">
+                        <div className="flex items-center gap-2 text-amber-700 mb-2">
                           <span className="text-lg">📊</span>
                           <span className="font-medium">Phân Bổ KPI:</span>
                         </div>
                         <div className="grid grid-cols-2 gap-4 text-sm">
                           <div className="bg-white/50 rounded-lg p-3">
-                            <div className="text-sky-700 font-medium">Theo Ngày</div>
-                            <div className="text-lg font-bold text-sky-800">{kpiBreakdown.daily} KPI/ngày</div>
+                            <div className="text-amber-700 font-medium">Theo Ngày</div>
+                            <div className="text-lg font-bold text-amber-800">{kpiBreakdown.daily} KPI/ngày</div>
                           </div>
                           <div className="bg-white/50 rounded-lg p-3">
-                            <div className="text-sky-700 font-medium">Theo Tuần</div>
-                            <div className="text-lg font-bold text-sky-800">{kpiBreakdown.weekly} KPI/tuần</div>
+                            <div className="text-amber-700 font-medium">Theo Tuần</div>
+                            <div className="text-lg font-bold text-amber-800">{kpiBreakdown.weekly} KPI/tuần</div>
                           </div>
                         </div>
-                        <p className="text-xs text-sky-600 mt-2">
+                        <p className="text-xs text-amber-600 mt-2">
                           Tổng KPI: <strong>{totalKPI}</strong> | Thời gian: <strong>{kpiBreakdown.totalWeeks} tuần</strong>
                         </p>
                       </div>
@@ -497,23 +498,25 @@ export function KpiCreateModal({ isOpen, chain, onClose, onSuccess }: KpiCreateM
               Hủy
             </button>
             <button
-              type="button"
-              disabled={loading}
+              type="submit"
               onClick={handleSubmit}
-              className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-sky-300 to-green-300 text-white font-semibold hover:from-sky-400 hover:to-green-300 focus:ring-4 focus:ring-green-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center gap-2"
+              disabled={loading}
+              className={`inline-flex items-center rounded-full overflow-hidden shadow-sm transition ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              style={{ background: 'linear-gradient(90deg, #fb923c 0%, #fb7a2d 100%)' }}
             >
               {loading ? (
                 <>
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Đang ban hành...
+                  <span className="px-4 py-2 text-2sm font-medium text-white">Đang Tạo Chuỗi...</span>
+                  <span className="w-7 h-7 mr-1 bg-white flex items-center justify-center rounded-full">
+                    <div className="w-4 h-4 border-2 border-orange-300 border-t-transparent rounded-full animate-spin" />
+                  </span>
                 </>
               ) : (
                 <>
-                  <CheckCircle className="w-5 h-5" />
-                  Ban Hành KPI
+                  <span className="px-4 py-2 text-2sm font-medium text-white">Tạo Chuỗi Sản Xuất</span>
+                  <span className="w-7 h-7 mr-1 bg-white flex items-center justify-center rounded-full">
+                    <CheckCircle className="w-4 h-4 text-orange-500" />
+                  </span>
                 </>
               )}
             </button>

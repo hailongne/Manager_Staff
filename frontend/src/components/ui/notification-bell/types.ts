@@ -53,6 +53,8 @@ export interface NotificationListProps {
   deletingId: number | null;
   acknowledgingId: number | null;
   error: string | null;
+  activeTab: TabKey;
+  onTabChange: (tab: TabKey) => void;
 }
 
 export type { Notification };

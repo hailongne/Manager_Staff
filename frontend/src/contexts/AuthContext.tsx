@@ -12,7 +12,7 @@ const DEFAULT_AVATAR = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/sv
 const SESSION_DURATION_MS = 24 * 60 * 60 * 1000;
 const SESSION_EXPIRY_KEY = "token_expires_at";
 const SESSION_LOGOUT_REASON_KEY = "session_logout_reason";
-const SESSION_EXPIRED_MESSAGE = "Bạn đã hết phiên đăng nhập. Vui lòng đăng nhập lại.";
+const SESSION_EXPIRED_MESSAGE = "Hết phiên đăng nhập. Vui lòng đăng nhập lại.";
 const ACCOUNT_REMOVED_MESSAGE = "Tài khoản của bạn không còn tồn tại trong hệ thống. Vui lòng đăng nhập lại.";
 
 let hasShownExpiredAlert = false;

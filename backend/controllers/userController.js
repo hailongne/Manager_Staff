@@ -195,6 +195,49 @@ exports.updateUser = async (req, res) => {
 };
 
 /**
+ * Upload CV file and update user's cv_url
+ */
+exports.uploadCv = async (req, res) => {
+  try {
+    const userId = parseUserId(req.params.id);
+    if (!userId) return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: 'ID không hợp lệ' });
+
+    const authUser = await getAuthUser(req);
+    if (!authUser) return res.status(HTTP_STATUS.UNAUTHORIZED).json({ message: 'Access denied' });
+
+    const user = await userService.getUserById(userId);
+
+    // Permission check
+    if (!userService.canAccessUser(authUser, { user_id: userId, department: user.department })) {
+      return res.status(HTTP_STATUS.FORBIDDEN).json({ message: 'Permission denied' });
+    }
+
+    if (!req.file) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: 'No file uploaded' });
+    }
+
+    // Build accessible URL for stored file
+    const fileName = req.file.filename;
+    const filePath = `/uploads/cv/${fileName}`;
+    const fullUrl = `${req.protocol}://${req.get('host')}${filePath}`;
+
+    // Persist cv_url to user record directly
+    const { User } = require('../models');
+    const target = await User.findByPk(userId);
+    if (!target) return res.status(HTTP_STATUS.NOT_FOUND).json({ message: 'User not found' });
+
+    await target.update({ cv_url: fullUrl });
+
+    const fresh = await userService.getUserById(userId);
+    res.json({ message: 'CV uploaded', user: fresh, cv_url: fullUrl });
+  } catch (err) {
+    console.error('uploadCv error', err);
+    const status = err.status || HTTP_STATUS.INTERNAL_SERVER_ERROR;
+    res.status(status).json({ message: err.message || 'Upload failed' });
+  }
+};
+
+/**
  * Change password
  */
 exports.changePassword = async (req, res) => {

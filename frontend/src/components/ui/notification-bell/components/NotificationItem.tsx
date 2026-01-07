@@ -48,22 +48,20 @@ export function NotificationItem({
   notification,
   onMarkRead,
   onDelete,
-  onAcknowledge,
+  onAcknowledge: _onAcknowledge,
   deletingId,
-  acknowledgingId,
+  acknowledgingId: _acknowledgingId,
   error
 }: NotificationItemProps) {
   const createdAt = toVietnamDate(notification.created_at);
   const formattedDate = formatNotificationDate(createdAt);
   const isUnread = notification.status === "unread";
-  const isTaskNotification = notification.type === "task";
-
   return (
     <li
       className={`rounded-xl border px-4 py-3 transition shadow-sm ${
         isUnread
-          ? "border-pink-100 bg-pink-50/60"
-          : "border-gray-100 bg-white hover:border-pink-100"
+          ? "border-orange-100 bg-orange-50/60"
+          : "border-gray-100 bg-white hover:border-orange-100"
       }`}
     >
       <div className="flex items-start gap-3">
@@ -71,7 +69,7 @@ export function NotificationItem({
           <span className="text-xl" role="img" aria-label="notification icon">
             {getNotificationIcon(notification.type)}
           </span>
-          {isUnread ? <span className="w-2 h-2 rounded-full bg-pink-500" /> : null}
+          {isUnread ? <span className="w-2 h-2 rounded-full bg-orange-600" /> : null}
         </div>
         <div className="flex-1">
           <div className="flex items-center justify-between gap-2">
@@ -92,26 +90,11 @@ export function NotificationItem({
       </div>
 
       <div className="mt-3 flex items-center justify-end gap-2">
-        {isTaskNotification ? (
-          <button
-            onClick={() => onAcknowledge(notification)}
-            className="px-3 py-1.5 text-xs rounded-lg border border-blue-200 text-blue-600 hover:bg-blue-50 disabled:opacity-50"
-            disabled={acknowledgingId === notification.notification_id}
-          >
-            {acknowledgingId === notification.notification_id ? "Đang xác nhận..." : "Xác nhận"}
-          </button>
-        ) : null}
         <button
           onClick={() => onMarkRead(notification, true)}
-          className="px-3 py-1.5 text-xs rounded-lg border border-pink-200 text-pink-600 hover:bg-pink-50"
+          className="px-3 py-1.5 text-xs rounded-lg border border-orange-200 text-orange-600 hover:bg-orange-50"
         >
           Xem chi tiết
-        </button>
-        <button
-          onClick={() => onMarkRead(notification)}
-          className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50"
-        >
-          {notification.status === "unread" ? "Đánh dấu đã đọc" : "Đánh dấu chưa đọc"}
         </button>
         <button
           onClick={() => onDelete(notification.notification_id)}

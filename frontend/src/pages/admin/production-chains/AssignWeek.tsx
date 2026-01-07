@@ -494,7 +494,7 @@ export default function AssignWeek() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center justify-end gap-3 border-t border-gray-100 pt-5">
+              <div className="flex flex-wrap items-center justify-end gap-3 border-gray-100 pt-2">
                 <button className="rounded-full border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-500 transition hover:border-rose-400 hover:bg-rose-50" onClick={() => navigate(-1)}>Hủy</button>
                 <button className="rounded-full bg-rose-500 px-6 py-2 text-sm font-semibold text-white shadow-lg shadow-rose-200 transition hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-60" onClick={handleSubmit} disabled={submitting}>{submitting ? 'Đang gửi...' : 'Giao tuần'}</button>
               </div>

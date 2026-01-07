@@ -7,16 +7,16 @@ export function NotificationHeader({
   hasNotifications
 }: NotificationHeaderProps) {
   return (
-    <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-      <h3 className="text-sm font-semibold text-gray-700">Thông báo</h3>
+    <div className="px-4 py-3 border-b border-orange-100 flex items-center justify-between bg-white">
+      <h3 className="text-sm font-semibold text-gray-800">Thông báo</h3>
       <div className="flex items-center gap-2 text-xs">
-        <button onClick={onRefresh} className="text-pink-500 hover:text-pink-600">
+        <button onClick={onRefresh} className="text-orange-600 hover:text-orange-700">
           Làm mới
         </button>
         {hasNotifications ? (
           <button
             onClick={onClearAll}
-            className="text-gray-400 hover:text-pink-500 disabled:text-gray-300"
+            className="text-gray-400 hover:text-orange-600 disabled:text-gray-300"
             disabled={clearing}
           >
             {clearing ? "Đang xóa..." : "Xóa tất cả"}

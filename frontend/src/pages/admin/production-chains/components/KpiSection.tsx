@@ -14,6 +14,7 @@ interface KpiSectionProps {
   canCompleteKpi: boolean;
   canEditKpi: boolean;
   isAdmin: boolean;
+  readOnly?: boolean;
   chainKpis?: ChainKpi[];
   onOpenKpiEditModal: () => void;
   onKpiCompletionUpdate?: () => void;
@@ -37,6 +38,8 @@ export function KpiSection({
   onCreateNewKpi,
   onDeleteKpi,
   onKpiSelectionChange
+  ,
+  readOnly = false
 }: KpiSectionProps) {
   const [localSelectedKpi, setLocalSelectedKpi] = useState<ChainKpi | null>(selectedKpi);
   const [selectedKpiId, setSelectedKpiId] = useState<string>('');
@@ -82,6 +85,8 @@ export function KpiSection({
   const handleDayRightClick = async (dateStr: string, event: React.MouseEvent) => {
     event.preventDefault(); // Prevent context menu
     
+    if (readOnly) return;
+
     if (!localSelectedKpi || !canCompleteKpi) {
       return;
     }
@@ -114,23 +119,25 @@ export function KpiSection({
   };
 
   return (
-    <div className="mt-4 rounded-2xl border border-sky-100 bg-sky-50 p-4">
+    <div className="mt-4 rounded-2xl border border-orange-100 bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <h4 className="text-sm font-semibold text-sky-700">
+          <h4 className="text-sm font-semibold text-orange-800">
             {localSelectedKpi ? `KPI từ ${formatDate(localSelectedKpi.start_date)} đến ${formatDate(localSelectedKpi.end_date)}` : `KPI tháng ${kpiSummaryMonth}/${kpiSummaryYear}`}
           </h4>
         </div>
 
-        <KpiActions
-          canEditKpi={canEditKpi}
-          hasKpi={!!localSelectedKpi}
-          isAdmin={isAdmin}
-          onCreateNewKpi={onCreateNewKpi}
-          onOpenKpiEditModal={onOpenKpiEditModal}
-          onDeleteKpi={onDeleteKpi}
-          selectedKpiId={localSelectedKpi?.chain_kpi_id}
-        />
+        {!readOnly && (
+          <KpiActions
+            canEditKpi={canEditKpi}
+            hasKpi={!!localSelectedKpi}
+            isAdmin={isAdmin}
+            onCreateNewKpi={onCreateNewKpi}
+            onOpenKpiEditModal={onOpenKpiEditModal}
+            onDeleteKpi={onDeleteKpi}
+            selectedKpiId={localSelectedKpi?.chain_kpi_id}
+          />
+        )}
       </div>
 
       {localSelectedKpi ? (
@@ -147,11 +154,12 @@ export function KpiSection({
             chainKpis={chainKpis}
             selectedKpiId={selectedKpiId}
             onKpiFilterChange={handleKpiFilterChange}
-            
+            bodyScrollable={readOnly}
+            readOnly={readOnly}
           />
         </div>
       ) : (
-        <p className="mt-3 text-xs text-sky-700">
+        <p className="mt-3 text-xs text-orange-700">
           {hasKpis
             ? `Tháng này chưa có KPI. Gần nhất: ${latestKpi?.start_date ? new Date(latestKpi.start_date).toLocaleDateString('vi-VN') : 'N/A'} với chỉ tiêu ${latestKpi ? latestKpi.target_value : 0}.`
             : "Chuỗi chưa có KPI nào được ban hành."}

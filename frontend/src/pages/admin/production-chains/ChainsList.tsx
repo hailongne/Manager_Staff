@@ -4,6 +4,8 @@ import type { ProductionChain, ProductionChainStep } from "../../../api/producti
 import { useModalToast } from "../../../hooks/useToast";
 import { useAuth } from "../../../hooks/useAuth";
 import { KpiManagementSection } from "./components/KpiManagementSection";
+import DisabledChainCard from "./components/DisabledChainCard";
+import DisabledChainModal from "./components/DisabledChainModal";
 import { EditChainBasicModal } from "./EditChainBasicModal";
 import { CreateChainForm } from "./CreateChainForm";
 import { TabNavigation } from "./components/TabNavigation";
@@ -88,6 +90,20 @@ export default function ProductionChainsList() {
   // Edit modal state
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingChain, setEditingChain] = useState<ProductionChain | null>(null);
+
+  // Disabled-chain details modal (keeps selection + open state only)
+  const [disabledModalOpen, setDisabledModalOpen] = useState(false);
+  const [selectedDisabledChain, setSelectedDisabledChain] = useState<ProductionChain | null>(null);
+
+  const openDisabledChainDetails = (chain: ProductionChain) => {
+    setSelectedDisabledChain(chain);
+    setDisabledModalOpen(true);
+  };
+
+  const closeDisabledChainDetails = () => {
+    setDisabledModalOpen(false);
+    setSelectedDisabledChain(null);
+  };
 
   console.log('ChainsList user:', user);
   console.log('ChainsList userRole:', user?.role);
@@ -338,7 +354,7 @@ export default function ProductionChainsList() {
     return (
       <div className="w-full px-8 py-8">
         <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
           <p className="mt-4 text-gray-500">Đang tải...</p>
         </div>
       </div>
@@ -347,9 +363,9 @@ export default function ProductionChainsList() {
 
   return (
     <div className="w-full px-8 py-8">
-      <header className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Quản Lý Chuỗi Sản Xuất</h1>
-        <p className="mt-2 text-sm text-gray-600">
+      <header className="mb-3">
+        <h1 className="text-2xl font-bold text-orange-700">Quản Lý Chuỗi Sản Xuất</h1>
+        <p className="mt-2 text-sm text-orange-500">
           Tạo và quản lý các chuỗi quy trình sản xuất với nhiều phòng ban tham gia.
         </p>
       </header>
@@ -365,7 +381,7 @@ export default function ProductionChainsList() {
 
       {/* Filters */}
       {(activeTab === "list" || activeTab === "disabled") && (
-        <div className="p-1 flex flex-wrap items-center gap-1">
+        <div className="w-full p-1 flex flex-wrap items-center gap-1 justify-end">
           <div className="flex items-center gap-1">
             <div className="relative">
               <input
@@ -373,8 +389,14 @@ export default function ProductionChainsList() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Tìm kiếm theo tên chuỗi..."
-                className="pl-2 pr-2 py-2 text-sm rounded-full bg-pink-50 border border-pink-200 text-gray-700 placeholder-pink-300 focus:outline-none focus:ring-2 focus:ring-pink-200 focus:border-pink-300 transition"
+                className="w-80 pl-3 pr-10 py-2 text-sm rounded-full bg-orange-50 border border-orange-200 text-gray-700 placeholder-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-300 transition"
               />
+              <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                <svg aria-hidden="true" className="h-4 w-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19a8 8 0 100-16 8 8 0 000 16z" />
+                </svg>
+              </div>
             </div>
           </div>
         </div>
@@ -385,53 +407,75 @@ export default function ProductionChainsList() {
         <div className="space-y-4">
           {filteredChains.map((chain) => (
             <div key={chain.chain_id} className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex-1">
-                  <h2 className="text-xl font-semibold text-gray-900">{chain.name}</h2>
-                  <p className="text-gray-600 mt-1">{chain.description}</p>
-                </div>
-                <div className="flex gap-3 ml-4">
-                  {isAdmin && (
-                    <>
-                        <button
-                        onClick={() => handleEditChain(chain)}
-                        title="Chỉnh sửa chuỗi sản xuất"
-                        className="inline-flex items-center gap-2 px-2 py-2 rounded-lg text-yellow-600 hover:text-gray-500"
-                        >
-                        Chỉnh Sửa
-                        </button>
-                        <button
-                        onClick={() => handleDeleteChain(chain)}
-                        title="Xóa hoặc vô hiệu hóa chuỗi sản xuất"
-                        className="inline-flex items-center gap-2 px-2 py-2 rounded-lg text-red-600 hover:text-red-500"
-                        >
-                        Xóa Chuỗi
-                        </button>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex flex-wrap gap-2">
-                  {chain.steps?.sort((a, b) => a.step_order - b.step_order).map((step: ProductionChainStep, index: number) => (
-                    <div key={step.step_id} className="flex items-center">
-                      <div className="bg-pink-100 text-pink-700 px-3 py-1 rounded-xl text-sm font-medium text-center">
-                        {step.step_order}. {step.department?.name}
-                        <p className="text-xs text-gray-500">
-                          {step.title}
-                        </p>
-                      </div>
-                      {index < chain.steps.length - 1 && (
-                        <span className="mx-3 text-gray-400 text-5xl">→</span>
+                <div className="flex justify-between items-center mb-4">
+                  <div className="flex-1 min-w-0 flex items-center gap-4 overflow-hidden">
+                    <div className="w-1.5 h-10 bg-orange-600 rounded" aria-hidden />
+                    <div className="min-w-0 overflow-hidden">
+                      <h2 className="text-lg md:text-xl font-semibold text-orange-700 leading-tight truncate">{chain.name}</h2>
+                      {chain.description ? (
+                        chain.description.length > 200 ? (
+                          <p className="mt-1 text-sm text-gray-500 truncate max-w-[80ch]" title={chain.description}>{chain.description.slice(0, 200)}...</p>
+                        ) : (
+                          <p className="mt-1 text-sm text-gray-500 truncate max-w-[80ch]">{chain.description}</p>
+                        )
+                      ) : (
+                        <p className="mt-1 text-sm text-gray-500 truncate max-w-[80ch]">chuỗi sản xuất</p>
                       )}
                     </div>
-                  ))}
+                  </div>
+
+                  <div className="flex gap-3 ml-4 items-center flex-shrink-0">
+                    {(isAdmin || user?.role === 'leader') && (
+                    <>
+                      <button
+                      onClick={() => handleEditChain(chain)}
+                      title="Chỉnh sửa chuỗi sản xuất"
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-orange-200 text-orange-600 hover:bg-orange-50 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-orange-200"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M11 5h6M7 11l6-6 4 4-6 6H7v-4z" />
+                        </svg>
+                        <span className="text-sm font-medium">Chỉnh Sửa</span>
+                      </button>
+
+                      <button
+                      onClick={() => handleDeleteChain(chain)}
+                      title="Xóa hoặc vô hiệu hóa chuỗi sản xuất"
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-orange-600 text-white hover:bg-orange-700 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-orange-300"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M19 7L5 7M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12" />
+                        </svg>
+                        <span className="text-sm font-medium">Xóa Chuỗi</span>
+                      </button>
+                    </>
+                    )}
+                  </div>
+                </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center w-full gap-2">
+                  {chain.steps
+                    ?.sort((a, b) => a.step_order - b.step_order)
+                    .map((step: ProductionChainStep) => {
+                      return (
+                        <div key={step.step_id} className="flex items-center flex-shrink-0">
+                          {/* STEP */}
+                          <div className="flex items-center bg-white border border-gray-200 rounded-xl shadow px-3 py-2">
+                            <div className="w-10 h-10 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center font-semibold mr-3">
+                              {step.step_order}
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium">{step.department?.name}</div>
+                              <div className="text-xs text-gray-500">{step.title}</div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
               </div>
 
-              {/* Feedback Section */}
-              {/* KPI Section */}
               {(() => {
                 const chainKpisForThisChain = chainKpis.filter(kpi => kpi.chain_id === chain.chain_id && kpi.chain_id != null);
                 
@@ -529,7 +573,7 @@ export default function ProductionChainsList() {
               {chains.length === 0 && isAdmin && (
                 <button
                   onClick={() => setActiveTab("create")}
-                  className="inline-flex items-center gap-2 px-2 py-2 rounded-lg border border-pink-200 text-pink-600 hover:bg-pink-100"
+                  className="inline-flex items-center gap-2 px-2 py-2 rounded-lg border border-orange-200 text-orange-600 hover:bg-orange-100"
                 >
                   Tạo Chuỗi Đầu Tiên
                 </button>
@@ -544,7 +588,7 @@ export default function ProductionChainsList() {
         <div className="space-y-4">
           {disabledLoading ? (
             <div className="text-center py-8">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
               <p className="mt-2 text-gray-600">Đang tải...</p>
             </div>
           ) : filteredDisabledChains.length === 0 ? (
@@ -553,53 +597,14 @@ export default function ProductionChainsList() {
             </div>
           ) : (
             filteredDisabledChains.map((chain) => (
-              <div key={chain.chain_id} className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex-1">
-                    <h2 className="text-xl font-semibold text-gray-900">{chain.name}</h2>
-                    <p className="text-gray-600 mt-1">{chain.description}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                        Đã vô hiệu hóa
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex gap-3 ml-4">
-                    {isAdmin && (
-                      <button
-                        onClick={() => handleEnableChain(chain)}
-                        className="inline-flex items-center text-green-600 px-3 py-2 text-sm leading-4 font-medium rounded-md hover:text-green-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                      >
-                        Kích hoạt lại
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Chain Steps */}
-                <div className="mb-4">
-                  <h3 className="text-sm font-medium text-gray-900 mb-2">Các bước thực hiện:</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {chain.steps?.sort((a, b) => a.step_order - b.step_order).map((step: ProductionChainStep, index: number) => (
-                      <div key={step.step_id || index} className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-800">
-                        <span className="font-medium mr-1">{step.step_order}.</span>
-                        {step.title}
-                        {step.department && (
-                          <span className="ml-2 text-xs text-gray-600">({step.department.name})</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Chain Info */}
-                <div className="flex items-center justify-between text-sm text-gray-500">
-                  <div className="flex items-center gap-4">
-                    <span>Tạo bởi: {chain.creator?.name || 'N/A'}</span>
-                  </div>
-                  <span>{new Date(chain.created_at || '').toLocaleDateString('vi-VN')}</span>
-                </div>
-              </div>
+              <DisabledChainCard
+                  key={chain.chain_id}
+                  chain={chain}
+                  isAdmin={isAdmin}
+                  canViewDetails={isAdmin || user?.role === 'leader'}
+                  onEnable={handleEnableChain}
+                  onViewDetails={openDisabledChainDetails}
+                />
             ))
           )}
         </div>
@@ -615,6 +620,16 @@ export default function ProductionChainsList() {
 
 
       {/* Edit Chain Modal */}
+      <DisabledChainModal
+        isOpen={disabledModalOpen}
+        chain={selectedDisabledChain}
+        onClose={closeDisabledChainDetails}
+        chainKpisFallback={selectedDisabledChain ? chainKpis.filter(k => k.chain_id === selectedDisabledChain.chain_id && k.chain_id != null) : []}
+        canCompleteKpi={canCompleteKpi}
+        onKpiCompletionUpdate={handleKpiCompletionUpdate}
+        onKpiUpdate={handleKpiUpdate}
+        onDeleteKpi={handleDeleteKpi}
+      />
       <EditChainBasicModal
         isOpen={showEditModal}
         onClose={() => {

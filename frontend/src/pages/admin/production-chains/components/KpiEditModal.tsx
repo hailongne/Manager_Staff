@@ -503,17 +503,18 @@ export function KpiEditModal({
   if (!isOpen || !chain || !kpi) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4 py-6 animate-in fade-in duration-200">
-      <div ref={modalRef} className="w-full max-w-7xl max-h-[95vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-100 flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4 py-6 animate-in fade-in duration-200">
+      <div ref={modalRef} className="w-full max-w-7xl max-h-[95vh] overflow-hidden rounded-2xl bg-white shadow-2xl border border-orange-50 flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between bg-gradient-to-r from-sky-100 via-sky-50 to-sky-200 px-8 py-6 text-white border-b border-sky-200 flex-shrink-0">
+        <div className="flex items-center justify-between bg-gradient-to-r from-orange-50 via-orange-100 to-orange-200 px-8 py-6 border-b border-orange-200 flex-shrink-0">
           <div>
-            <h2 className="text-2xl font-bold text-sky-800">Điều chỉnh KPI</h2>
-            <p className="text-sky-600 text-sm mt-1">Quản lý mục tiêu KPI chi tiết theo tuần và ngày</p>
+            <h2 className="text-2xl font-bold text-orange-800">Điều chỉnh KPI</h2>
+            <p className="text-orange-600 text-sm mt-1">Quản lý mục tiêu KPI chi tiết theo tuần và ngày</p>
           </div>
           <button
             onClick={onClose}
-            className="rounded-full p-2 text-sky-600 hover:bg-sky-200 hover:text-sky-800 transition-all duration-200"
+            className="rounded-full p-2 text-orange-700 hover:bg-orange-100 hover:text-orange-900 transition-all duration-200"
+            aria-label="Đóng"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -525,26 +526,25 @@ export function KpiEditModal({
         <div className="flex-1 overflow-y-auto">
           <form onSubmit={handleSubmit} className="p-8 space-y-8">
             {/* Header Info & KPI Total */}
-            <div className="bg-gradient-to-r from-gray-50 to-sky-50 rounded-xl p-6 border border-sky-300">
+            <div className="bg-gradient-to-r from-white to-orange-50 rounded-xl p-6 border border-orange-200">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-sky-100 rounded-full flex items-center justify-center">
-                    <svg className="w-6 h-6 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                    <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">{chain.name}</h3>
-                    <p className="text-sm text-gray-600">Chuỗi sản xuất</p>
+                    <p className="text-sm text-gray-600">{chain.description}</p>
                   </div>
                 </div>
-
                 <div className="flex items-center gap-6">
                   <div className="flex flex-col items-center gap-2">
                   <button
                     type="button"
                     onClick={distributeKpiEvenly}
-                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-sky-500 to-sky-600 text-white text-sm font-semibold rounded-lg hover:from-sky-600 hover:to-sky-700 focus:outline-none focus:ring-4 focus:ring-sky-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold rounded-lg hover:from-orange-600 hover:to-orange-700 focus:outline-none focus:ring-4 focus:ring-orange-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                     disabled={!weeks.length}
                     title="Tự động phân bổ KPI cho các ngày đi làm chưa hoàn thành, giữ nguyên KPI của ngày đã hoàn thành"
                   >
@@ -573,7 +573,7 @@ export function KpiEditModal({
             {previewWeeks && previewWeeks.length > 0 ? (
               <div className="space-y-6">
                 <div className="flex items-center gap-3">
-                  <h3 className="text-xl font-bold text-gray-900">Chi tiết KPI theo tuần</h3>
+                  <h3 className="text-xl font-bold text-orange-800">Chi tiết KPI theo tuần</h3>
                   <div className="flex-1 h-px bg-gradient-to-r from-gray-300 to-transparent"></div>
                 </div>
 

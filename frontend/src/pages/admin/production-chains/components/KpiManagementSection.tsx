@@ -18,6 +18,7 @@ interface KpiManagementSectionProps {
   onKpiCompletionUpdate?: () => void;
   onKpiUpdate?: () => void;
   onDeleteKpi?: (kpiId: number) => void;
+  readOnly?: boolean;
 }
 
 export function KpiManagementSection({
@@ -34,6 +35,8 @@ export function KpiManagementSection({
   onKpiCompletionUpdate,
   onKpiUpdate,
   onDeleteKpi
+  ,
+  readOnly = false
 }: KpiManagementSectionProps) {
   const [showKpiEditModal, setShowKpiEditModal] = useState(false);
   const [showKpiCreateModal, setShowKpiCreateModal] = useState(false);
@@ -69,6 +72,7 @@ export function KpiManagementSection({
         canCompleteKpi={canCompleteKpi}
         canEditKpi={canEditKpi}
         isAdmin={isAdmin}
+        readOnly={readOnly}
         chainKpis={chainKpis}
         onOpenKpiEditModal={handleOpenKpiEditModal}
         onKpiCompletionUpdate={onKpiCompletionUpdate}
@@ -77,21 +81,25 @@ export function KpiManagementSection({
         onKpiSelectionChange={handleKpiSelectionChange}
       />
 
-      <KpiEditModal
-        isOpen={showKpiEditModal}
-        kpi={currentSelectedKpi}
-        chain={productionChain}
-        onClose={() => setShowKpiEditModal(false)}
-        onSuccess={onKpiUpdate}
-        userRole={userRole || 'user'}
-      />
+      {!readOnly && (
+        <>
+          <KpiEditModal
+            isOpen={showKpiEditModal}
+            kpi={currentSelectedKpi}
+            chain={productionChain}
+            onClose={() => setShowKpiEditModal(false)}
+            onSuccess={onKpiUpdate}
+            userRole={userRole || 'user'}
+          />
 
-      <KpiCreateModal
-        isOpen={showKpiCreateModal}
-        chain={productionChain}
-        onClose={() => setShowKpiCreateModal(false)}
-        onSuccess={onKpiUpdate}
-      />
+          <KpiCreateModal
+            isOpen={showKpiCreateModal}
+            chain={productionChain}
+            onClose={() => setShowKpiCreateModal(false)}
+            onSuccess={onKpiUpdate}
+          />
+        </>
+      )}
     </>
   );
 }

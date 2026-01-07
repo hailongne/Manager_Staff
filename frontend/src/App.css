@@ -50,26 +50,26 @@
   -webkit-appearance: none;
   -moz-appearance: none !important;
   background-image: none !important;
-  border: 1px solid #f8d8e9;
+  border: 1px solid #ffedd5; /* orange-100 */
   border-radius: 6px;
   padding: 0.6rem 1rem 0.6rem 0.5rem;
   line-height: 1.2;
   font-weight: 500;
   font-size: 0.8rem;
   letter-spacing: 0.01em;
-  background: linear-gradient(135deg, #ffffff 0%, #fff5fa 100%);
-  color: #b91c61;
+  background: linear-gradient(135deg, #ffffff 0%, #fff7ed 100%);
+  color: #ea580c; /* orange-600 */
   min-height: auto;
 }
 
 .ms-select:hover {
-  border-color: #f4b9d0;
+  border-color: #fed7aa; /* orange-200 */
 }
 
 .ms-select option {
   font-weight: 500;
-  background: #fff7fc !important;
-  color: #9d174d !important;
+  background: #fff7ed !important; /* orange-50 */
+  color: #c2410c !important; /* orange-700 */
   padding: 0.4rem 0.6rem;
   font-size: 0.8rem;
 }
@@ -77,8 +77,8 @@
 .ms-select option:checked,
 .ms-select option:hover,
 .ms-select option:focus {
-  background: #f8d8e9 !important;
-  color: #831843 !important;
+  background: #fff1e6 !important; /* light orange */
+  color: #9a3412 !important; /* darker orange */
 }
 
 .ms-select::-ms-expand {
