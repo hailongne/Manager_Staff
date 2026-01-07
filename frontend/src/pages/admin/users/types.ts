@@ -155,6 +155,8 @@ export interface StatsSectionProps {
   onSearchChange: (value: string) => void;
   employmentStatusFilter: string;
   onFilterChange: (value: string) => void;
+  roleFilter?: string;
+  onRoleChange?: (value: string) => void;
 }
 
 // Event handler types

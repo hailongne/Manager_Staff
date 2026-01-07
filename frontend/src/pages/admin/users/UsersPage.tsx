@@ -49,6 +49,8 @@ export default function UsersPage() {
     setSearchTerm,
     employmentStatusFilter,
     setEmploymentStatusFilter,
+    roleFilter,
+    setRoleFilter,
 
     // Department state
     departments,
@@ -208,6 +210,8 @@ export default function UsersPage() {
           onSearchChange={setSearchTerm}
           employmentStatusFilter={employmentStatusFilter}
           onFilterChange={setEmploymentStatusFilter}
+          roleFilter={roleFilter}
+          onRoleChange={setRoleFilter}
         />
       ) : null}
 

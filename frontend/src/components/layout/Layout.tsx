@@ -28,7 +28,10 @@ export default function Layout() {
         </div>
 
         {/* Menu chính */}
-        <nav className="flex flex-col gap-2 text-sm font-medium">
+        <nav
+          className="flex flex-col gap-2 font-sans text-base font-medium tracking-wide leading-6 text-gray-700 antialiased"
+          style={{ fontFamily: "'Noto Sans', 'Roboto', 'Helvetica Neue', Arial, sans-serif" }}
+        >
           <SidebarItem to="/dashboard">Tổng quan</SidebarItem>
           <SidebarItem to="/reports">Báo cáo</SidebarItem>
           {user?.role === "user" && (

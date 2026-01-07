@@ -68,6 +68,7 @@ export function useUsers() {
   // Filter state
   const [searchTerm, setSearchTerm] = useState("");
   const [employmentStatusFilter, setEmploymentStatusFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
 
   // Department state
   const [departments, setDepartments] = useState<ApiDepartment[]>([]);
@@ -90,9 +91,13 @@ export function useUsers() {
   const showManagementTools = Boolean(isAdmin || (isDepartmentHead && departmentKey));
   const selfOnlyView = Boolean(user && !showManagementTools);
 
-  // Admins and employees
+  // Admins and employees (employees can be filtered by role)
   const admins = useMemo(() => users.filter((item) => item.role === "admin"), [users]);
-  const employees = useMemo(() => users.filter((item) => item.role !== "admin"), [users]);
+  const employees = useMemo(() => {
+    const base = users.filter((item) => item.role !== "admin");
+    if (!roleFilter || roleFilter === "all") return base;
+    return base.filter((item) => item.role === roleFilter);
+  }, [users, roleFilter]);
 
   // Stats
   const stats: UserStats = useMemo(() => {
@@ -806,6 +811,8 @@ export function useUsers() {
     departmentKey,
     showManagementTools,
     selfOnlyView,
+    roleFilter,
+    setRoleFilter,
 
     // Permission checks
     canEditRecord,

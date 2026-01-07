@@ -7,6 +7,8 @@ interface StatsSectionProps {
   onSearchChange: (value: string) => void;
   employmentStatusFilter: string;
   onFilterChange: (value: string) => void;
+  roleFilter?: string;
+  onRoleChange?: (value: string) => void;
 }
 
 export function StatsSection({
@@ -15,6 +17,7 @@ export function StatsSection({
   onSearchChange,
   employmentStatusFilter,
   onFilterChange
+  , roleFilter, onRoleChange
 }: StatsSectionProps) {
   if (!stats.byStatus.length) return null;
 
@@ -43,6 +46,9 @@ export function StatsSection({
             </button>
           )}
         </div>
+      </div>
+
+      <div className="flex flex-wrap gap-3">
         <div className="relative inline-block text-left min-w-[160px]">
           <select
             value={employmentStatusFilter}
@@ -58,9 +64,18 @@ export function StatsSection({
           </select>
           <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">▾</span>
         </div>
-      </div>
-
-      <div className="flex flex-wrap gap-3">
+        <div className="relative inline-block text-left min-w-[140px]">
+          <select
+            value={roleFilter ?? 'all'}
+            onChange={(e) => onRoleChange?.(e.target.value)}
+            className="ms-select text-xs appearance-none pr-8 pl-3 py-2 rounded-lg bg-white border border-orange-200 text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-300 transition w-full"
+          >
+            <option value="all">Tất cả vai trò</option>
+            <option value="user">Nhân viên</option>
+            <option value="leader">Trưởng nhóm</option>
+          </select>
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">▾</span>
+        </div>
         <div className="px-3 py-1.5 rounded-full bg-green-50 text-green-600 text-xs font-semibold">
           Tổng: {stats.total}
         </div>
