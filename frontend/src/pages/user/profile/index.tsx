@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 // link not needed here (password form is inline)
 import { useAuth } from "../../../hooks/useAuth";
 import { useModalToast } from "../../../hooks/useToast";
 import { changePassword, type ChangePasswordPayload } from "../../../api/users";
+import { uploadAvatar, uploadCv } from "../../../api/users";
 import { FlashMessage } from "../../../components/ui/FlashMessage";
 import {
   submitProfileUpdate,
@@ -131,6 +132,26 @@ export default function ProfilePage() {
   const [loadingRequests, setLoadingRequests] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
+  const cvInputRef = useRef<HTMLInputElement | null>(null);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
+  const [avatarPendingFile, setAvatarPendingFile] = useState<File | null>(null);
+  const [cvPendingFile, setCvPendingFile] = useState<File | null>(null);
+  const [cvUploaded, setCvUploaded] = useState<boolean>(() => Boolean((user as { cv_url?: string })?.cv_url));
+
+  useEffect(() => {
+    setCvUploaded(Boolean((user as { cv_url?: string })?.cv_url));
+  }, [user]);
+
+  const resolveAssetUrl = (u?: string | null): string | null => {
+    if (!u) return null;
+    const s = String(u);
+    return s.startsWith("/") ? `${window.location.origin}${s}` : s;
+  };
+
+  const resolvedAvatarUrl = resolveAssetUrl((user as { avatar_url?: string })?.avatar_url ?? null);
+  const resolvedCvUrl = resolveAssetUrl((user as { cv_url?: string })?.cv_url ?? null);
+
   const editable = useMemo<FormState>(() => ({
     name: user?.name ?? "",
     email: user?.email ?? "",
@@ -164,176 +185,76 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!user) return;
     loadRequests().catch(console.error);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadRequests, user]);
 
-  const handleChange = (field: keyof FormState) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setForm((prev) => ({ ...prev, [field]: event.target.value }));
+  // (removed debug logs)
+
+  const handlePwChange = (field: keyof PasswordFormState) => (e: ChangeEvent<HTMLInputElement>) => {
+    setPasswordForm((p) => ({ ...p, [field]: e.target.value }));
   };
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
-    setSubmitting(true);
+  const dismissPwMessage = () => {
+    setPwMessageVisible(false);
+    setPwMessage(null);
+  };
+
+  const handlePwSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setPwSubmitting(true);
+    if (passwordForm.newPassword.length < 6) {
+      const msg = "Mật khẩu mới phải có ít nhất 6 ký tự.";
+      setPwMessage({ type: "error", text: msg });
+      toast.showErrorToast(msg);
+      setPwSubmitting(false);
+      return;
+    }
 
     try {
-      const fields: Array<keyof FormState> = [
-        "name",
-        "email",
-        "phone",
-        "address",
-        "work_shift_start",
-        "work_shift_end",
-        "note",
-        "reason"
-      ];
-
-      const sanitize = (key: keyof FormState, value: string) => {
-        const trimmed = value.trim();
-        if (key === "email") {
-          return trimmed.toLowerCase();
-        }
-        return trimmed;
-      };
-
-      const updates: SubmitProfileUpdatePayload = {};
-      let validationError: string | null = null;
-
-      for (const field of fields) {
-        const nextValue = sanitize(field, form[field]);
-        const currentValue = sanitize(field, editable[field]);
-
-        // Validate name không được để trống
-        if (field === "name" && nextValue === "") {
-          validationError = "Họ tên không được để trống.";
-          break;
-        }
-
-        // Validate email không được để trống
-        if (field === "email" && nextValue === "") {
-          validationError = "Email không được để trống.";
-          break;
-        }
-
-        // Validate email format
-        if (field === "email" && nextValue !== currentValue) {
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          if (!emailRegex.test(nextValue)) {
-            validationError = "Email không hợp lệ. Vui lòng kiểm tra lại.";
-            break;
-          }
-        }
-
-        if (nextValue === currentValue) {
-          continue;
-        }
-
-        (updates as Record<string, string>)[field] = nextValue;
-      }
-
-      if (validationError) {
-        toast.showErrorToast(validationError);
-        return;
-      }
-
-      // Require a reason when submitting any profile update
-      if (!('reason' in updates) || !(updates as Record<string, string>).reason || (updates as Record<string, string>).reason.trim() === '') {
-        toast.showErrorToast('Vui lòng nhập lý do thay đổi để gửi tới quản trị.');
-        return;
-      }
-
-      if (Object.keys(updates).length === 0) {
-        const msg = "Bạn chưa thay đổi thông tin nào so với hiện tại.";
-        toast.showErrorToast(msg);
-        return;
-      }
-
-      await submitProfileUpdate(updates);
-      const successMsg = "Đã gửi yêu cầu cập nhật tới quản trị.";
-      toast.showSuccessToast(successMsg);
+      await changePassword({
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+        confirmPassword: passwordForm.confirmPassword
+      });
       await refreshUser();
-      await loadRequests();
+      const successMsg = "Đã đổi mật khẩu thành công.";
+      setPwMessage({ type: "success", text: successMsg });
+      toast.showSuccessToast(successMsg);
+      setPasswordForm(DEFAULT_PW_FORM);
+      setShowPasswordForm(false);
     } catch (error) {
       console.error(error);
-      const text = error instanceof Error ? error.message : "Không thể gửi yêu cầu";
+      const axiosError = error as { response?: { data?: { message?: string } }; message?: string };
+      const text = axiosError.response?.data?.message || axiosError.message || "Không thể đổi mật khẩu.";
+      setPwMessage({ type: "error", text });
       toast.showErrorToast(text);
+    } finally {
+      setPwSubmitting(false);
+    }
+  };
+
+  const handleChange = (field: keyof FormState) => (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setForm((f) => ({ ...f, [field]: e.target.value }));
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!form.reason || form.reason.trim() === "") {
+      toast.showErrorToast("Vui lòng nhập lý do thay đổi");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await submitProfileUpdate(form as SubmitProfileUpdatePayload);
+      toast.showSuccessToast("Yêu cầu đã được gửi");
+      setForm({ ...DEFAULT_FORM, ...editable });
+      loadRequests().catch(console.error);
+    } catch (err) {
+      console.error(err);
+      toast.showErrorToast("Không thể gửi yêu cầu");
     } finally {
       setSubmitting(false);
     }
   };
-
-    // Password form handlers (inline)
-    useEffect(() => {
-      if (!pwMessage) return;
-      setPwMessageVisible(true);
-      const hideTimer = window.setTimeout(() => setPwMessageVisible(false), 4200);
-      const removeTimer = window.setTimeout(() => setPwMessage(null), 4700);
-      return () => {
-        window.clearTimeout(hideTimer);
-        window.clearTimeout(removeTimer);
-      };
-    }, [pwMessage]);
-
-    const dismissPwMessage = useCallback(() => {
-      setPwMessageVisible(false);
-      window.setTimeout(() => setPwMessage(null), 250);
-    }, []);
-
-    const handlePwChange = (field: keyof PasswordFormState) => (event: ChangeEvent<HTMLInputElement>) => {
-      setPasswordForm((prev) => ({ ...prev, [field]: event.target.value }));
-    };
-
-    const handlePwSubmit = async (event?: FormEvent<HTMLFormElement>) => {
-      event?.preventDefault();
-      setPwSubmitting(true);
-      setPwMessageVisible(false);
-      setPwMessage(null);
-
-      if (!passwordForm.currentPassword.trim() || !passwordForm.newPassword.trim() || !passwordForm.confirmPassword.trim()) {
-        const msg = "Vui lòng nhập đầy đủ thông tin.";
-        setPwMessage({ type: "error", text: msg });
-        toast.showErrorToast(msg);
-        setPwSubmitting(false);
-        return;
-      }
-
-      if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-        const msg = "Mật khẩu mới và xác nhận không khớp.";
-        setPwMessage({ type: "error", text: msg });
-        toast.showErrorToast(msg);
-        setPwSubmitting(false);
-        return;
-      }
-
-      if (passwordForm.newPassword.length < 6) {
-        const msg = "Mật khẩu mới phải có ít nhất 6 ký tự.";
-        setPwMessage({ type: "error", text: msg });
-        toast.showErrorToast(msg);
-        setPwSubmitting(false);
-        return;
-      }
-
-      try {
-        await changePassword({
-          currentPassword: passwordForm.currentPassword,
-          newPassword: passwordForm.newPassword,
-          confirmPassword: passwordForm.confirmPassword
-        });
-        await refreshUser();
-        const successMsg = "Đã đổi mật khẩu thành công.";
-        setPwMessage({ type: "success", text: successMsg });
-        toast.showSuccessToast(successMsg);
-        setPasswordForm(DEFAULT_PW_FORM);
-        setShowPasswordForm(false);
-      } catch (error) {
-        console.error(error);
-        const axiosError = error as { response?: { data?: { message?: string } }; message?: string };
-        const text = axiosError.response?.data?.message || axiosError.message || "Không thể đổi mật khẩu.";
-        setPwMessage({ type: "error", text });
-        toast.showErrorToast(text);
-      } finally {
-        setPwSubmitting(false);
-      }
-    };
 
 
   const profileSummary = useMemo(() => {
@@ -380,6 +301,156 @@ export default function ProfilePage() {
         <h1 className="text-xl font-semibold text-orange-600">Hồ sơ của tôi</h1>
         <p className="text-sm text-gray-500">Cập nhật thông tin cá nhân và theo dõi trạng thái phê duyệt.</p>
       </header>
+
+      <aside className="md:col-span-1 flex items-start">
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden bg-slate-800 flex items-center justify-center">
+              {avatarPreviewUrl ? (
+                <img src={avatarPreviewUrl} alt="avatar-preview" className="w-full h-full object-cover" />
+              ) : resolvedAvatarUrl ? (
+                <img src={resolvedAvatarUrl} alt="avatar" className="w-full h-full object-cover" />
+              ) : (
+                <div className="text-slate-400 text-4xl">👤</div>
+              )}
+            </div>
+
+            {/* small overlapping edit icon */}
+            <button
+              onClick={() => avatarInputRef.current?.click()}
+              className="absolute right-0 bottom-0 -translate-x-1/4 translate-y-1/4 w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs border border-orange-600 shadow-sm transition-colors duration-200 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400/30"
+              title="Cập nhật ảnh đại diện"
+            >
+              ✎
+            </button>
+
+            {avatarPendingFile ? (
+              <div className="absolute left-1/2 bottom-0 -translate-x-1/2 flex items-center gap-2 p-1">
+                <button
+                  onClick={async () => {
+                    if (!avatarPendingFile || !user) return;
+                    try {
+                      await uploadAvatar(user.user_id, avatarPendingFile);
+                      await refreshUser();
+                    } catch (err) {
+                      console.error(err);
+                    } finally {
+                      if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
+                      setAvatarPreviewUrl(null);
+                      setAvatarPendingFile(null);
+                    }
+                  }}
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-orange-500 hover:bg-orange-600 text-white text-sm shadow-md transition"
+                  title="Cập nhật ảnh"
+                >
+                  ✓
+                </button>
+                <button
+                  onClick={() => {
+                    if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
+                    setAvatarPreviewUrl(null);
+                    setAvatarPendingFile(null);
+                  }}
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-700 border border-slate-600 text-slate-200 text-sm shadow-md transition"
+                  title="Hủy"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="flex flex-col">
+            <h3 className="text-lg font-semibold text-gray-800">{user.name}</h3>
+            <p className="text-sm text-gray-500">{(user as { department?: string })?.department ?? ""}</p>
+
+            <div className="mt-3 flex items-center gap-2">
+              {(resolvedCvUrl || cvUploaded) ? (
+                <>
+                  <button
+                    onClick={() => window.open(resolvedCvUrl ?? ((user as { cv_url?: string })?.cv_url as string) ?? "#", "_blank")}
+                    className="px-2 py-1 rounded-md bg-transparent border border-orange-500 text-orange-400 text-sm hover:bg-orange-600/10 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-400/20"
+                  >
+                    Xem CV
+                  </button>
+                  <button
+                    onClick={() => cvInputRef.current?.click()}
+                    className="px-2 py-1 rounded-md bg-transparent border border-orange-500 text-orange-400 text-sm hover:bg-orange-600/10 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-400/20"
+                    title="Cập nhật CV"
+                  >
+                    ✎
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => cvInputRef.current?.click()}
+                  className="px-2 py-1 rounded-md bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm hover:bg-orange-500/15 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-400/20"
+                >
+                  Tải CV
+                </button>
+              )}
+            </div>
+          </div>
+
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (!f || !user) return;
+              const url = URL.createObjectURL(f);
+              setAvatarPreviewUrl(url);
+              setAvatarPendingFile(f);
+              e.currentTarget.value = "";
+            }}
+          />
+
+          <input
+            ref={cvInputRef}
+            type="file"
+            accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (!f || !user) return;
+              setCvPendingFile(f);
+              e.currentTarget.value = "";
+            }}
+          />
+
+          {cvPendingFile ? (
+            <div className="ml-4 mt-2 flex gap-2">
+              <button
+                onClick={async () => {
+                  if (!cvPendingFile || !user) return;
+                  try {
+                    await uploadCv(user.user_id, cvPendingFile);
+                    await refreshUser();
+                    setCvUploaded(Boolean((user as { cv_url?: string })?.cv_url));
+                  } catch (err) {
+                    console.error(err);
+                  } finally {
+                    setCvPendingFile(null);
+                  }
+                }}
+                className="px-2 py-1 text-xs rounded-md bg-orange-600 text-white"
+              >
+                Cập nhật
+              </button>
+              <button
+                onClick={() => {
+                  setCvPendingFile(null);
+                }}
+                className="px-2 py-1 text-xs rounded-md border border-gray-200 text-gray-700 bg-white"
+              >
+                Hủy
+              </button>
+            </div>
+          ) : null}
+        </div>
+      </aside>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <section className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">

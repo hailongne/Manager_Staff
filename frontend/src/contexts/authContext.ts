@@ -5,6 +5,8 @@ export interface User {
   name: string;
   role: "user" | "admin" | "leader";
   avatar?: string;
+  avatar_url?: string | null;
+  cv_url?: string | null;
   email?: string;
   username?: string;
   phone?: string;

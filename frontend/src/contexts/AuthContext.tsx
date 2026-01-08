@@ -69,11 +69,17 @@ const normalizeUser = (raw: unknown): User => {
   const rawRole = String(data.role ?? "user").toLowerCase();
   const role: "user" | "admin" | "leader" = rawRole === "admin" ? "admin" : rawRole === "leader" ? "leader" : "user";
 
+  // Prefer backend-provided avatar_url / cv_url but accept legacy `avatar` or `cv` names
+  const resolvedAvatarUrl = resolveOptionalString(data.avatar_url ?? (data as Record<string, unknown>).avatarUrl ?? data.avatar) ?? undefined;
+  const resolvedCvUrl = resolveOptionalString(data.cv_url ?? (data as Record<string, unknown>).cvUrl ?? data.cv) ?? undefined;
+
   return {
     user_id: resolvedId,
     name: String(data.name ?? ""),
     role,
-    avatar: resolveOptionalString(data.avatar) ?? DEFAULT_AVATAR,
+    avatar: resolvedAvatarUrl ?? DEFAULT_AVATAR,
+    avatar_url: resolvedAvatarUrl ?? null,
+    cv_url: resolvedCvUrl ?? null,
     email: resolveOptionalString(data.email),
     username: resolveOptionalString(data.username),
     phone: resolveOptionalString(data.phone),
@@ -100,6 +106,8 @@ const usersEqual = (a: User | null, b: User | null): boolean => {
     a.name === b.name &&
     a.role === b.role &&
     a.avatar === b.avatar &&
+    (a.avatar_url ?? null) === (b.avatar_url ?? null) &&
+    (a.cv_url ?? null) === (b.cv_url ?? null) &&
     a.email === b.email &&
     a.username === b.username &&
     a.phone === b.phone &&
