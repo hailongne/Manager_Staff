@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+// link not needed here (password form is inline)
 import { useAuth } from "../../../hooks/useAuth";
 import { useModalToast } from "../../../hooks/useToast";
+import { changePassword, type ChangePasswordPayload } from "../../../api/users";
+import { FlashMessage } from "../../../components/ui/FlashMessage";
 import {
   submitProfileUpdate,
   getMyProfileUpdates,
@@ -15,10 +17,10 @@ interface FormState {
   email: string;
   phone: string;
   address: string;
-  position: string;
   work_shift_start: string;
   work_shift_end: string;
   note: string;
+  reason: string;
 }
 
 // Form mặc định
@@ -27,10 +29,10 @@ const DEFAULT_FORM: FormState = {
   email: "",
   phone: "",
   address: "",
-  position: "",
   work_shift_start: "08:30",
   work_shift_end: "17:30",
   note: ""
+  ,reason: ""
 };
 
 // Nhãn trạng thái cập nhật
@@ -47,7 +49,6 @@ const FIELD_LABELS: Record<string, string> = {
   username: "Tên đăng nhập",
   phone: "Số điện thoại",
   address: "Địa chỉ",
-  position: "Vị trí công việc",
   department: "Phòng ban",
   department_position: "Chức vụ phòng ban",
   date_joined: "Ngày vào làm",
@@ -118,6 +119,13 @@ const formatProfileValue = (field: string, raw: unknown) => {
 export default function ProfilePage() {
   const { user, refreshUser } = useAuth();
   const toast = useModalToast();
+  type PasswordFormState = ChangePasswordPayload;
+  const DEFAULT_PW_FORM: PasswordFormState = { currentPassword: "", newPassword: "", confirmPassword: "" };
+  const [passwordForm, setPasswordForm] = useState<PasswordFormState>(DEFAULT_PW_FORM);
+  const [pwSubmitting, setPwSubmitting] = useState(false);
+  const [pwMessage, setPwMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [pwMessageVisible, setPwMessageVisible] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [requests, setRequests] = useState<ProfileUpdateRequest[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(false);
@@ -128,10 +136,10 @@ export default function ProfilePage() {
     email: user?.email ?? "",
     phone: user?.phone ?? "",
     address: user?.address ?? "",
-    position: user?.position ?? "",
     work_shift_start: user?.work_shift_start ?? "08:30",
     work_shift_end: user?.work_shift_end ?? "17:30",
-    note: user?.note ?? ""
+    note: user?.note ?? "",
+    reason: ""
   }), [user]);
 
   useEffect(() => {
@@ -173,10 +181,10 @@ export default function ProfilePage() {
         "email",
         "phone",
         "address",
-        "position",
         "work_shift_start",
         "work_shift_end",
-        "note"
+        "note",
+        "reason"
       ];
 
       const sanitize = (key: keyof FormState, value: string) => {
@@ -227,6 +235,12 @@ export default function ProfilePage() {
         return;
       }
 
+      // Require a reason when submitting any profile update
+      if (!('reason' in updates) || !(updates as Record<string, string>).reason || (updates as Record<string, string>).reason.trim() === '') {
+        toast.showErrorToast('Vui lòng nhập lý do thay đổi để gửi tới quản trị.');
+        return;
+      }
+
       if (Object.keys(updates).length === 0) {
         const msg = "Bạn chưa thay đổi thông tin nào so với hiện tại.";
         toast.showErrorToast(msg);
@@ -247,15 +261,89 @@ export default function ProfilePage() {
     }
   };
 
+    // Password form handlers (inline)
+    useEffect(() => {
+      if (!pwMessage) return;
+      setPwMessageVisible(true);
+      const hideTimer = window.setTimeout(() => setPwMessageVisible(false), 4200);
+      const removeTimer = window.setTimeout(() => setPwMessage(null), 4700);
+      return () => {
+        window.clearTimeout(hideTimer);
+        window.clearTimeout(removeTimer);
+      };
+    }, [pwMessage]);
+
+    const dismissPwMessage = useCallback(() => {
+      setPwMessageVisible(false);
+      window.setTimeout(() => setPwMessage(null), 250);
+    }, []);
+
+    const handlePwChange = (field: keyof PasswordFormState) => (event: ChangeEvent<HTMLInputElement>) => {
+      setPasswordForm((prev) => ({ ...prev, [field]: event.target.value }));
+    };
+
+    const handlePwSubmit = async (event?: FormEvent<HTMLFormElement>) => {
+      event?.preventDefault();
+      setPwSubmitting(true);
+      setPwMessageVisible(false);
+      setPwMessage(null);
+
+      if (!passwordForm.currentPassword.trim() || !passwordForm.newPassword.trim() || !passwordForm.confirmPassword.trim()) {
+        const msg = "Vui lòng nhập đầy đủ thông tin.";
+        setPwMessage({ type: "error", text: msg });
+        toast.showErrorToast(msg);
+        setPwSubmitting(false);
+        return;
+      }
+
+      if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+        const msg = "Mật khẩu mới và xác nhận không khớp.";
+        setPwMessage({ type: "error", text: msg });
+        toast.showErrorToast(msg);
+        setPwSubmitting(false);
+        return;
+      }
+
+      if (passwordForm.newPassword.length < 6) {
+        const msg = "Mật khẩu mới phải có ít nhất 6 ký tự.";
+        setPwMessage({ type: "error", text: msg });
+        toast.showErrorToast(msg);
+        setPwSubmitting(false);
+        return;
+      }
+
+      try {
+        await changePassword({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+          confirmPassword: passwordForm.confirmPassword
+        });
+        await refreshUser();
+        const successMsg = "Đã đổi mật khẩu thành công.";
+        setPwMessage({ type: "success", text: successMsg });
+        toast.showSuccessToast(successMsg);
+        setPasswordForm(DEFAULT_PW_FORM);
+        setShowPasswordForm(false);
+      } catch (error) {
+        console.error(error);
+        const axiosError = error as { response?: { data?: { message?: string } }; message?: string };
+        const text = axiosError.response?.data?.message || axiosError.message || "Không thể đổi mật khẩu.";
+        setPwMessage({ type: "error", text });
+        toast.showErrorToast(text);
+      } finally {
+        setPwSubmitting(false);
+      }
+    };
+
 
   const profileSummary = useMemo(() => {
     const source = user ?? {};
-    const layout: Array<{ field: keyof typeof FIELD_LABELS; span?: 1 | 2 }> = [
+      const layout: Array<{ field: keyof typeof FIELD_LABELS; span?: 1 | 2 }> = [
       { field: "name" },
-      { field: "phone" },
-      { field: "username" },
       { field: "email" },
-      { field: "position" },
+      { field: "username" },
+      { field: "phone" },
+      { field: "address", span: 2 },
       { field: "department" },
       { field: "department_position" },
       { field: "employment_status" },
@@ -265,7 +353,6 @@ export default function ProfilePage() {
       { field: "remaining_leave_days" },
       { field: "work_shift_start" },
       { field: "work_shift_end" },
-      { field: "address", span: 2 },
       { field: "note", span: 2 }
     ];
 
@@ -290,7 +377,7 @@ export default function ProfilePage() {
   return (
     <div className=" mx-auto px-6 pb-6">
       <header className="mb-6">
-        <h1 className="text-xl font-semibold text-pink-600">Hồ sơ của tôi</h1>
+        <h1 className="text-xl font-semibold text-orange-600">Hồ sơ của tôi</h1>
         <p className="text-sm text-gray-500">Cập nhật thông tin cá nhân và theo dõi trạng thái phê duyệt.</p>
       </header>
 
@@ -300,15 +387,31 @@ export default function ProfilePage() {
             <h2 className="text-sm font-semibold text-gray-700 uppercase">Thông tin hiện tại</h2>
             <p className="text-xs text-gray-500">Dữ liệu đã được quản trị phê duyệt gần nhất.</p>
           </header>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {profileSummary.map(({ field, label, value, span }) => {
               const placeholder = value === "Chưa cập nhật";
+              if (field === "note") {
+                return (
+                  <div
+                    key={field}
+                    className="rounded-xl border border-orange-100 bg-orange-50/40 px-4 py-3 md:col-span-3 min-h-[96px]"
+                  >
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-orange-500">
+                      {label}
+                    </p>
+                    <p className={`mt-1 text-sm whitespace-pre-line break-words ${placeholder ? "text-gray-400" : "text-gray-800"}`}>
+                      {value}
+                    </p>
+                  </div>
+                );
+              }
+
               return (
                 <div
                   key={field}
-                  className={`rounded-xl border border-pink-100 bg-pink-50/40 px-4 py-3 ${span === 2 ? "md:col-span-2" : ""}`}
+                  className={`rounded-xl border border-orange-100 bg-orange-50/40 px-4 py-3 ${span === 2 ? "md:col-span-2" : ""}`}
                 >
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-pink-500">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-orange-500">
                     {label}
                   </p>
                   <p className={`mt-1 text-sm whitespace-pre-line break-words ${placeholder ? "text-gray-400" : "text-gray-800"}`}>
@@ -317,15 +420,74 @@ export default function ProfilePage() {
                 </div>
               );
             })}
-            <div className="rounded-xl border border-pink-200 bg-pink-50/60 px-4 py-3 md:col-span-2">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-pink-500">Mật khẩu hiện tại</p>
+            <div className="rounded-xl border border-orange-200 bg-orange-50/60 px-4 py-3 md:col-span-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-orange-500">Mật khẩu hiện tại</p>
               <p className="mt-1 text-sm text-gray-800">******** (đã mã hóa)</p>
-              <Link
-                to="/change-password"
-                className="mt-2 inline-flex items-center text-xs text-pink-600 hover:text-pink-700"
-              >
-                Đổi mật khẩu mặc định →
-              </Link>
+              <div className="mt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordForm((s) => !s)}
+                  className="inline-flex items-center px-3 py-1 text-xs font-medium text-orange-600 hover:text-orange-700"
+                >
+                  {showPasswordForm ? "Hủy" : "Đổi mật khẩu"}
+                </button>
+              </div>
+
+              {showPasswordForm ? (
+                <div className="mt-3">
+                  {pwMessage ? (
+                    <FlashMessage
+                      type={pwMessage.type}
+                      text={pwMessage.text}
+                      onClose={dismissPwMessage}
+                      position="toaster"
+                      visible={pwMessageVisible}
+                    />
+                  ) : null}
+
+                  <form onSubmit={handlePwSubmit} className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Mật khẩu hiện tại</label>
+                      <input
+                        type="password"
+                        value={passwordForm.currentPassword}
+                        onChange={handlePwChange("currentPassword")}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
+                        autoComplete="current-password"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Mật khẩu mới</label>
+                      <input
+                        type="password"
+                        value={passwordForm.newPassword}
+                        onChange={handlePwChange("newPassword")}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
+                        autoComplete="new-password"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Xác nhận mật khẩu mới</label>
+                      <input
+                        type="password"
+                        value={passwordForm.confirmPassword}
+                        onChange={handlePwChange("confirmPassword")}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
+                        autoComplete="new-password"
+                      />
+                    </div>
+                    <div className="flex justify-end">
+                      <button
+                        type="submit"
+                        disabled={pwSubmitting}
+                        className="px-3 py-1 bg-orange-500 text-white rounded-md hover:bg-orange-600 disabled:opacity-60 text-sm"
+                      >
+                        {pwSubmitting ? "Đang đổi..." : "Xác nhận"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              ) : null}
             </div>
           </div>
         </section>
@@ -342,7 +504,7 @@ export default function ProfilePage() {
                 <input
                   value={form.name}
                   onChange={handleChange("name")}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-200"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
                 />
               </div>
               <div>
@@ -351,7 +513,7 @@ export default function ProfilePage() {
                   type="email"
                   value={form.email}
                   onChange={handleChange("email")}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-200"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
                 />
               </div>
               <div>
@@ -359,7 +521,7 @@ export default function ProfilePage() {
                 <input
                   value={form.phone}
                   onChange={handleChange("phone")}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-200"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
                 />
               </div>
               <div>
@@ -367,17 +529,10 @@ export default function ProfilePage() {
                 <input
                   value={form.address}
                   onChange={handleChange("address")}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-200"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
                 />
               </div>
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-600 mb-1">Vị trí công việc</label>
-                <input
-                  value={form.position}
-                  onChange={handleChange("position")}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-200"
-                />
-              </div>
+              {/* position field removed */}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -387,7 +542,7 @@ export default function ProfilePage() {
                   type="time"
                   value={form.work_shift_start}
                   onChange={handleChange("work_shift_start")}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-200"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
                 />
               </div>
               <div>
@@ -396,18 +551,29 @@ export default function ProfilePage() {
                   type="time"
                   value={form.work_shift_end}
                   onChange={handleChange("work_shift_end")}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-200"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
                 />
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">Ghi chú thêm</label>
-              <textarea
+                <textarea
                 value={form.note}
                 onChange={handleChange("note")}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-200 resize-none"
+                rows={2}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200 resize-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-1">Lý do thay đổi (gửi tới quản trị)</label>
+              <textarea
+                value={form.reason}
+                onChange={handleChange("reason")}
+                rows={2}
+                placeholder="Lý do để quản trị phê duyệt"
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200 resize-none"
               />
             </div>
 
@@ -415,7 +581,7 @@ export default function ProfilePage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 disabled:opacity-60"
+                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-60"
               >
                 {submitting ? "Đang gửi..." : "Gửi yêu cầu cập nhật"}
               </button>
@@ -443,7 +609,7 @@ export default function ProfilePage() {
               const changeEntries = Object.entries(request.changes ?? {});
 
               return (
-                <div key={request.request_id} className="border border-pink-100 bg-pink-50/40 rounded-xl p-4 space-y-3">
+                <div key={request.request_id} className="border border-orange-100 bg-orange-50/40 rounded-xl p-4 space-y-3">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div>
                       <p className="text-sm font-semibold text-gray-700">Yêu cầu #{request.request_id}</p>
@@ -466,7 +632,7 @@ export default function ProfilePage() {
                         const label = FIELD_LABELS[key] ?? key;
                         return (
                           <li key={key}>
-                            <span className="font-medium text-pink-600">{label}:</span> {formatChangeValue(key, value)}
+                            <span className="font-medium text-orange-600">{label}:</span> {formatChangeValue(key, value)}
                           </li>
                         );
                       })}
@@ -475,8 +641,15 @@ export default function ProfilePage() {
                     <p className="text-sm text-gray-500">Không có thông tin thay đổi cụ thể.</p>
                   )}
 
+                      {request.reason ? (
+                        <div className="mt-2 border border-yellow-100 bg-yellow-50 rounded-lg p-3 text-sm text-yellow-700">
+                          <p className="font-medium">Lý do thay đổi:</p>
+                          <p className="whitespace-pre-line mt-1">{request.reason}</p>
+                        </div>
+                      ) : null}
+
                   {request.admin_note ? (
-                    <div className="border border-purple-200 bg-purple-50 rounded-lg p-3 text-sm text-purple-700">
+                    <div className="border border-red-200 bg-red-50 rounded-lg p-3 text-sm text-red-700">
                       <p className="font-medium">Ghi chú từ quản trị:</p>
                       <p className="whitespace-pre-line mt-1">{request.admin_note}</p>
                     </div>

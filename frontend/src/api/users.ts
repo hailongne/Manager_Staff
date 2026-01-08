@@ -83,6 +83,15 @@ export const uploadCv = async (id: number, file: File): Promise<{ message: strin
   return res.data;
 };
 
+export const uploadAvatar = async (id: number, file: File): Promise<{ message: string; user: User; avatar_url: string }> => {
+  const fd = new FormData();
+  fd.append('avatar', file);
+  const res = await api.post(`/users/${id}/avatar`, fd, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return res.data;
+};
+
 export interface ChangePasswordPayload {
   currentPassword: string;
   newPassword: string;

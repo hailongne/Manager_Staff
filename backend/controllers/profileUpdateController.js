@@ -1,6 +1,7 @@
 const { Op } = require('sequelize');
 const ProfileUpdateRequest = require('../models/ProfileUpdateRequest');
 const User = require('../models/User');
+const sequelize = require('../config/db');
 const { createAdminNotification, createUserNotification, markNotificationsReadByEntity } = require('../utils/notificationService');
 
 const ALLOWED_FIELDS = [
@@ -8,7 +9,6 @@ const ALLOWED_FIELDS = [
   'email',
   'phone',
   'address',
-  'position',
   'date_joined',
   'employment_status',
   'work_shift_start',
@@ -47,7 +47,6 @@ const mapUserProfile = (userInstance) => {
     name,
     email,
     phone,
-    position,
     address,
     date_joined,
     employment_status,
@@ -67,7 +66,6 @@ const mapUserProfile = (userInstance) => {
     name,
     email,
     phone,
-    position,
     address,
     date_joined,
     employment_status,
@@ -86,6 +84,7 @@ const mapUserProfile = (userInstance) => {
 exports.submitProfileUpdate = async (req, res) => {
   try {
     const changes = sanitizeChanges(req.body || {});
+    const reason = typeof req.body.reason === 'string' && req.body.reason.trim() !== '' ? req.body.reason.trim() : null;
 
     const currentUser = await User.findByPk(req.user.user_id);
     if (!currentUser) {
@@ -122,6 +121,7 @@ exports.submitProfileUpdate = async (req, res) => {
     const request = await ProfileUpdateRequest.create({
       user_id: currentUser.user_id,
       changes,
+      reason,
       status: 'pending'
     });
 
@@ -169,7 +169,7 @@ exports.getPendingRequests = async (req, res) => {
         {
           model: User,
           as: 'requester',
-          attributes: ['user_id', 'name', 'email', 'employment_status', 'position']
+          attributes: ['user_id', 'name', 'email', 'employment_status']
         }
       ]
     });
@@ -201,7 +201,7 @@ exports.getHistory = async (req, res) => {
         {
           model: User,
           as: 'requester',
-          attributes: ['user_id', 'name', 'email', 'employment_status', 'position']
+          attributes: ['user_id', 'name', 'email', 'employment_status']
         },
         {
           model: User,
@@ -218,6 +218,7 @@ exports.getHistory = async (req, res) => {
 };
 
 exports.reviewRequest = async (req, res) => {
+  let tx;
   try {
     const { id } = req.params;
     const { decision, note } = req.body;
@@ -239,12 +240,17 @@ exports.reviewRequest = async (req, res) => {
     }
 
     const recipientUserId = request.user_id;
+
+    // Start transaction to update user and request atomically
+    tx = await sequelize.transaction();
+
     if (decision === 'approved') {
       const changes = request.changes || {};
 
       if (changes.email) {
         const nextEmail = normalizeEmail(changes.email);
         if (!nextEmail) {
+          await tx.rollback();
           return res.status(400).json({ message: 'Email cập nhật không hợp lệ' });
         }
 
@@ -252,25 +258,30 @@ exports.reviewRequest = async (req, res) => {
           where: {
             email: nextEmail,
             user_id: { [Op.ne]: recipientUserId }
-          }
+          },
+          transaction: tx
         });
 
         if (duplicateEmail) {
+          await tx.rollback();
           return res.status(400).json({ message: 'Email đã được sử dụng bởi nhân viên khác' });
         }
 
         changes.email = nextEmail;
       }
 
-      await request.requester.update(changes);
+      await request.requester.update(changes, { transaction: tx });
     }
 
     await request.update({
       status: decision,
       admin_id: req.user.user_id,
       admin_note: note || null
-    });
+    }, { transaction: tx });
 
+    await tx.commit();
+
+    // Reload outside transaction
     await request.reload({
       include: [
         {
@@ -303,6 +314,7 @@ exports.reviewRequest = async (req, res) => {
       message: notificationMessage,
       metadata: {
         request_id: request.request_id,
+        reason: request.reason || null,
         decision,
         admin_note: note || null,
         changes: request.changes,
@@ -319,6 +331,10 @@ exports.reviewRequest = async (req, res) => {
       profile: profileSnapshot
     });
   } catch (error) {
+    if (tx) {
+      try { await tx.rollback(); } catch (e) { /* ignore */ }
+    }
+    console.error(error);
     res.status(500).json({ message: error.message });
   }
 };

@@ -25,7 +25,6 @@ const shapeUser = (instance) => {
     username: plain.username,
     role: plain.role,
     phone: plain.phone,
-    position: plain.position,
     avatar_url: plain.avatar_url ?? null,
     cv_url: plain.cv_url ?? null,
     department_id: plain.department_id,

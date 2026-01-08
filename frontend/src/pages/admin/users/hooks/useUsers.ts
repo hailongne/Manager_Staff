@@ -400,6 +400,25 @@ export function useUsers() {
     }
   };
 
+  const handleUploadAvatar = async (target: ApiUser, file: File): Promise<ApiUser | void> => {
+    try {
+      setSubmitting(true);
+      const { uploadAvatar } = await import('../../../../api/users');
+      const res = await uploadAvatar(target.user_id, file);
+      const normalized = normalizeUserRecord(res.user);
+      const adjusted = applyDepartmentAdjustments([normalized])[0];
+      setUsers((prev) => prev.map((u) => (u.user_id === adjusted.user_id ? adjusted : u)));
+      setMessage({ type: 'success', text: 'Đã tải lên ảnh đại diện' });
+      return adjusted;
+    } catch (err) {
+      const msg = resolveErrorMessage(err, 'Không thể tải ảnh đại diện lên');
+      setMessage({ type: 'error', text: msg });
+      return undefined;
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
 
   const handleCreate = async (values: FormState) => {
     setSubmitting(true);
@@ -823,6 +842,7 @@ export function useUsers() {
     handleUpdate,
     handleDelete,
     handleUploadCv,
+    handleUploadAvatar,
     handleDepartmentModalSubmit,
     handleDepartmentDelete,
 

@@ -138,7 +138,6 @@ const buildProfilePayload = async (body) => {
     name: normalizeString(body.name),
     email: normalizeEmail(body.email),
     phone: body.phone ?? body.phone_number ?? null,
-    position: body.position ?? body.job_title ?? null,
     department_id: departmentName ? departmentId : null,
     department: departmentName,
     address: body.address ?? null,

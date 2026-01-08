@@ -4,6 +4,7 @@ export interface ProfileUpdateRequest {
   request_id: number;
   user_id: number;
   changes: Record<string, unknown>;
+  reason?: string | null;
   status: "pending" | "approved" | "rejected";
   admin_id?: number | null;
   admin_note?: string | null;
@@ -34,6 +35,7 @@ export interface SubmitProfileUpdatePayload {
   work_shift_start?: string;
   work_shift_end?: string;
   note?: string;
+  reason?: string;
 }
 
 export interface UserProfileSnapshot {

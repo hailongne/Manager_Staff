@@ -7,16 +7,13 @@ import type { User } from "./authContext";
 import { login as apiLogin } from "../api/auth";
 import { getCurrentUser } from "../api/users";
 import { isAxiosError } from "axios";
-
 const DEFAULT_AVATAR = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="%23cccccc"/></svg>';
 const SESSION_DURATION_MS = 24 * 60 * 60 * 1000;
 const SESSION_EXPIRY_KEY = "token_expires_at";
 const SESSION_LOGOUT_REASON_KEY = "session_logout_reason";
 const SESSION_EXPIRED_MESSAGE = "Hết phiên đăng nhập. Vui lòng đăng nhập lại.";
 const ACCOUNT_REMOVED_MESSAGE = "Tài khoản của bạn không còn tồn tại trong hệ thống. Vui lòng đăng nhập lại.";
-
 let hasShownExpiredAlert = false;
-
 // Lấy giá trị cookie
 const getCookie = (name: string): string | null => {
   const value = `; ${document.cookie}`;
@@ -34,7 +31,7 @@ const setCookieWithExpiry = (name: string, value: string, expiresAt: number) => 
   const expiryDate = new Date(expiresAt);
   document.cookie = `${name}=${encodeURIComponent(value)}; path=/; expires=${expiryDate.toUTCString()}`;
 };
-
+ 
 // Xóa cookie
 const clearCookie = (name: string) => {
   document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
@@ -80,7 +77,6 @@ const normalizeUser = (raw: unknown): User => {
     email: resolveOptionalString(data.email),
     username: resolveOptionalString(data.username),
     phone: resolveOptionalString(data.phone),
-    position: resolveOptionalString(data.position),
     department_id: resolveNumberOrUndefined(data.department_id ?? (data as Record<string, unknown>).departmentId) ?? null,
     department: resolveOptionalString(data.department),
     department_position: resolveOptionalString(data.department_position ?? (data as Record<string, unknown>).departmentPosition),
@@ -107,7 +103,6 @@ const usersEqual = (a: User | null, b: User | null): boolean => {
     a.email === b.email &&
     a.username === b.username &&
     a.phone === b.phone &&
-    a.position === b.position &&
     a.department_id === b.department_id &&
     a.department === b.department &&
     a.department_position === b.department_position &&

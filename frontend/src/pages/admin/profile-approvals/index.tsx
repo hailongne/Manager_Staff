@@ -26,7 +26,6 @@ const FIELD_LABELS: Record<string, string> = {
   email: "Email",
   phone: "Số điện thoại",
   address: "Địa chỉ",
-  position: "Vị trí công việc",
   date_joined: "Ngày vào làm",
   employment_status: "Trạng thái làm việc",
   work_shift_start: "Giờ vào ca",
@@ -152,27 +151,27 @@ export default function ProfileApprovalsPage() {
     <div className="py-6">
       <header className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-pink-600">Phê duyệt cập nhật hồ sơ</h1>
+          <h1 className="text-xl font-semibold text-orange-600">Phê duyệt cập nhật hồ sơ</h1>
           <p className="text-sm text-gray-500">Xác nhận thay đổi thông tin do nhân viên gửi lên.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex rounded-full border border-pink-200 bg-pink-50 text-xs font-medium text-pink-600">
+          <div className="inline-flex rounded-full border border-orange-200 bg-white text-xs font-medium text-orange-600">
             <button
               onClick={() => setActiveTab("pending")}
-              className={`px-3 py-1.5 rounded-full transition ${activeTab === "pending" ? "bg-white text-pink-600 shadow" : "text-pink-500"}`}
+              className={`px-3 py-1.5 rounded-full transition ${activeTab === "pending" ? "bg-white text-orange-600 shadow" : "text-orange-500"}`}
             >
               Đang chờ
             </button>
             <button
               onClick={() => setActiveTab("history")}
-              className={`px-3 py-1.5 rounded-full transition ${activeTab === "history" ? "bg-white text-pink-600 shadow" : "text-pink-500"}`}
+              className={`px-3 py-1.5 rounded-full transition ${activeTab === "history" ? "bg-white text-orange-600 shadow" : "text-orange-500"}`}
             >
               Lịch sử
             </button>
           </div>
           <button
             onClick={refreshCurrentTab}
-            className="px-4 py-2 text-sm rounded-lg border border-pink-200 text-pink-600 hover:bg-pink-50"
+            className="px-4 py-2 text-sm rounded-lg border border-orange-200 text-orange-600 hover:bg-orange-50"
           >
             Làm mới
           </button>
@@ -199,12 +198,12 @@ export default function ProfileApprovalsPage() {
             <div className="p-6 text-sm text-gray-500">Không có yêu cầu nào cần phê duyệt.</div>
           ) : (
             <table className="min-w-full text-sm">
-              <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
+              <thead className="bg-white text-orange-600 uppercase text-xs">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold">Nhân viên</th>
-                  <th className="px-4 py-3 text-left font-semibold">Thông tin đề xuất</th>
-                  <th className="px-4 py-3 text-left font-semibold">Gửi lúc</th>
-                  <th className="px-4 py-3 text-right font-semibold">Hành động</th>
+                  <th className="px-4 py-3 text-left font-semibold border-b border-orange-100">Nhân viên</th>
+                  <th className="px-4 py-3 text-left font-semibold border-b border-orange-100">Thông tin đề xuất</th>
+                  <th className="px-4 py-3 text-left font-semibold border-b border-orange-100">Gửi lúc</th>
+                  <th className="px-4 py-3 text-right font-semibold border-b border-orange-100">Hành động</th>
                 </tr>
               </thead>
               <tbody>
@@ -215,17 +214,21 @@ export default function ProfileApprovalsPage() {
                       <td className="px-4 py-3 text-sm text-gray-700">
                         <p className="font-semibold">{request.requester?.name ?? `#${request.user_id}`}</p>
                         <p className="text-xs text-gray-500">{request.requester?.email ?? "Không có email"}</p>
-                        {request.requester?.position ? (
-                          <p className="text-xs text-gray-500 mt-1">{request.requester.position}</p>
-                        ) : null}
+                        {/* position removed (DB column deleted) */}
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-600 space-y-2">
                         {entries.map(([key, value]) => (
-                          <div key={key} className="rounded-xl border border-pink-100 bg-pink-50/60 px-3 py-2">
-                            <p className="text-[11px] uppercase tracking-wide text-pink-500">{FIELD_LABELS[key] ?? key}</p>
+                          <div key={key} className="rounded-xl border border-orange-100 bg-white/60 px-3 py-2">
+                            <p className="text-[11px] uppercase tracking-wide text-orange-500">{FIELD_LABELS[key] ?? key}</p>
                             <p className="text-sm text-gray-700 font-medium">{formatChangeValue(key, value)}</p>
                           </div>
                         ))}
+                        {request.reason ? (
+                          <div className="rounded-xl border border-yellow-100 bg-yellow-50/60 px-3 py-2">
+                            <p className="text-[11px] uppercase tracking-wide text-yellow-600">Lý do</p>
+                            <p className="text-sm text-yellow-800 font-medium">{request.reason}</p>
+                          </div>
+                        ) : null}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
                         {new Date(request.created_at).toLocaleString("vi-VN")}
@@ -234,7 +237,7 @@ export default function ProfileApprovalsPage() {
                         <div className="flex justify-end gap-2">
                           <button
                             onClick={() => handleDecision(request.request_id, "approved")}
-                            className="px-3 py-1.5 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-60"
+                            className="px-3 py-1.5 rounded-lg bg-orange-500 text-white hover:bg-orange-600 disabled:opacity-60"
                             disabled={actionState.loadingId === request.request_id}
                           >
                             {actionState.loadingId === request.request_id ? "Đang xử lý..." : "Chấp nhận"}
@@ -263,14 +266,15 @@ export default function ProfileApprovalsPage() {
             <div className="p-6 text-sm text-gray-500">Chưa có lịch sử phê duyệt.</div>
           ) : (
             <table className="min-w-full text-sm">
-              <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
+              <thead className="bg-white text-orange-600 uppercase text-xs">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold">Nhân viên</th>
-                  <th className="px-4 py-3 text-left font-semibold">Trạng thái</th>
-                  <th className="px-4 py-3 text-left font-semibold">Thông tin đã xử lý</th>
-                  <th className="px-4 py-3 text-left font-semibold">Phê duyệt bởi</th>
-                  <th className="px-4 py-3 text-left font-semibold">Ghi chú</th>
-                  <th className="px-4 py-3 text-left font-semibold">Cập nhật</th>
+                  <th className="px-4 py-3 text-left font-semibold border-b border-orange-100">Nhân viên</th>
+                  <th className="px-4 py-3 text-left font-semibold border-b border-orange-100">Trạng thái</th>
+                  <th className="px-4 py-3 text-left font-semibold border-b border-orange-100">Thông tin đã xử lý</th>
+                  <th className="px-4 py-3 text-left font-semibold border-b border-orange-100">Phê duyệt bởi</th>
+                  <th className="px-4 py-3 text-left font-semibold border-b border-orange-100">Lý do</th>
+                  <th className="px-4 py-3 text-left font-semibold border-b border-orange-100">Ghi chú</th>
+                  <th className="px-4 py-3 text-left font-semibold border-b border-orange-100">Cập nhật</th>
                 </tr>
               </thead>
               <tbody>
@@ -290,14 +294,17 @@ export default function ProfileApprovalsPage() {
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-600 space-y-2">
                         {entries.map(([key, value]) => (
-                          <div key={key} className="rounded-xl border border-pink-100 bg-pink-50/60 px-3 py-2">
-                            <p className="text-[11px] uppercase tracking-wide text-pink-500">{FIELD_LABELS[key] ?? key}</p>
+                          <div key={key} className="rounded-xl border border-orange-100 bg-orange-50/60 px-3 py-2">
+                            <p className="text-[11px] uppercase tracking-wide text-orange-500">{FIELD_LABELS[key] ?? key}</p>
                             <p className="text-sm text-gray-700 font-medium">{formatChangeValue(key, value)}</p>
                           </div>
                         ))}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-600">
                         {item.reviewer?.name ?? "-"}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-gray-500">
+                        {item.reason || "-"}
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-500">
                         {item.admin_note || "-"}

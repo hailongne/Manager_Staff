@@ -74,6 +74,7 @@ export default function UsersPage() {
     handleUpdate,
     handleDelete,
     handleUploadCv,
+    handleUploadAvatar,
     handleDepartmentModalSubmit,
     handleDepartmentDelete,
 
@@ -233,6 +234,7 @@ export default function UsersPage() {
         isAdmin={isAdmin}
         onEdit={openEditModal}
         onUploadCv={handleUploadCv}
+        onUploadAvatar={handleUploadAvatar}
         onDelete={openDeleteDialog}
         onAddUser={openCreateUserModal}
         renderStatusBadge={renderStatusBadge}

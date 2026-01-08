@@ -238,6 +238,47 @@ exports.uploadCv = async (req, res) => {
 };
 
 /**
+ * Upload avatar file and update user's avatar_url
+ */
+exports.uploadAvatar = async (req, res) => {
+  try {
+    const userId = parseUserId(req.params.id);
+    if (!userId) return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: 'ID không hợp lệ' });
+
+    const authUser = await getAuthUser(req);
+    if (!authUser) return res.status(HTTP_STATUS.UNAUTHORIZED).json({ message: 'Access denied' });
+
+    const user = await userService.getUserById(userId);
+
+    // Permission check
+    if (!userService.canAccessUser(authUser, { user_id: userId, department: user.department })) {
+      return res.status(HTTP_STATUS.FORBIDDEN).json({ message: 'Permission denied' });
+    }
+
+    if (!req.file) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: 'No file uploaded' });
+    }
+
+    const fileName = req.file.filename;
+    const filePath = `/uploads/avatars/${fileName}`;
+    const fullUrl = `${req.protocol}://${req.get('host')}${filePath}`;
+
+    const { User } = require('../models');
+    const target = await User.findByPk(userId);
+    if (!target) return res.status(HTTP_STATUS.NOT_FOUND).json({ message: 'User not found' });
+
+    await target.update({ avatar_url: fullUrl });
+
+    const fresh = await userService.getUserById(userId);
+    res.json({ message: 'Avatar uploaded', user: fresh, avatar_url: fullUrl });
+  } catch (err) {
+    console.error('uploadAvatar error', err);
+    const status = err.status || HTTP_STATUS.INTERNAL_SERVER_ERROR;
+    res.status(status).json({ message: err.message || 'Upload failed' });
+  }
+};
+
+/**
  * Change password
  */
 exports.changePassword = async (req, res) => {

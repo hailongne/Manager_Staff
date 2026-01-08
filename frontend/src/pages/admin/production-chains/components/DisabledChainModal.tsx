@@ -108,7 +108,7 @@ export default function DisabledChainModal({ isOpen, chain, onClose, chainKpisFa
         aria-modal="true"
         aria-labelledby="disabled-chain-title"
         aria-describedby="disabled-chain-desc"
-        className="relative w-full max-w-5xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden max-h-[90vh] ring-1 ring-black/5"
+        className="relative w-full max-w-6xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden max-h-[95vh] ring-1 ring-black/5"
       >
         <header className="flex items-start justify-between gap-4 px-6 py-4 border-b border-red-50 bg-white">
           <div className="min-w-0">
@@ -137,8 +137,8 @@ export default function DisabledChainModal({ isOpen, chain, onClose, chainKpisFa
           </div>
         </header>
 
-        <div className="p-6" style={{ maxHeight: '70vh' }}>
-          <div className="max-h-[55vh] overflow-y-auto scrollbar-thin scrollbar-thumb-rounded scrollbar-thumb-gray-300">
+        <div className="p-6" style={{ maxHeight: '80vh' }}>
+          <div className="max-h-[80vh]">
             {loading ? (
               <div className="text-center py-8">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red-500" role="status" aria-hidden="true" />

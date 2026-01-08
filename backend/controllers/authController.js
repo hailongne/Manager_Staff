@@ -19,7 +19,6 @@ const mapUser = (userInstance) => {
     username: plain.username,
     role: plain.role,
     phone: plain.phone,
-    position: plain.position,
     department_id: plain.department_id,
     department: plain.department,
     department_position: plain.department_position,

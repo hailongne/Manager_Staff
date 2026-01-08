@@ -277,8 +277,8 @@ export default function AssignWeek() {
         <div className="rounded-2xl border border-gray-200 bg-white/95 px-8 py-6 shadow-sm">
           <div className="flex flex-wrap items-start justify-between gap-4 border-b border-rose-100 pb-5">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-rose-400">Quy trình giao KPI</p>
-              <h1 className="text-3xl font-semibold text-gray-900">Giao KPI theo tuần</h1>
+              <p className="text-[15px] font-semibold uppercase tracking-[0.35em] text-rose-400">Quy trình giao KPI</p>
+              <h1 className="text-2xl font-semibold text-rose-800">Giao KPI theo tuần</h1>
               {currentUser?.role === 'leader' && (
                 <p className="mt-2 text-sm text-rose-500">Phòng ban: {leaderDeptName ?? '—'}</p>
               )}

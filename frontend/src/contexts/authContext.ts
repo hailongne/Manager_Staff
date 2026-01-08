@@ -8,7 +8,6 @@ export interface User {
   email?: string;
   username?: string;
   phone?: string;
-  position?: string;
   department_id?: number | null;
   department?: string;
   department_position?: string;

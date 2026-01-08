@@ -48,10 +48,10 @@ export function KpiTable({ kpi, formatDate, formatDayDetail, onDayRightClick, ca
         const canAssignWeek = weekTarget > 0 && user?.role === 'leader' && !readOnly;
 
         return (
-          <div key={week.week_index} className="relative overflow-hidden rounded-lg border border-orange-100 border-l-6 border-l-orange-200 bg-white p-3 pl-6">
-            <div className="absolute left-0 top-0 bottom-0 w-3 bg-gradient-to-r from-orange-200 to-transparent opacity-50 pointer-events-none" aria-hidden="true" />
-            <div className="absolute left-0 right-0 top-0 h-1 bg-gradient-to-r from-orange-200 to-transparent opacity-80 pointer-events-none" aria-hidden="true" />
-            <div className="absolute left-0 right-0 bottom-0 h-1 bg-gradient-to-r from-orange-200 to-transparent opacity-80 pointer-events-none" aria-hidden="true" />
+          <div key={week.week_index} className="relative overflow-hidden rounded-lg border border-orange-100 border-l-3 border-l-orange-200 bg-white p-5 pl-6">
+            <div className="absolute left-0 top-0 bottom-0 w-5 bg-gradient-to-r from-orange-200 to-transparent opacity-50 pointer-events-none" aria-hidden="true" />
+            <div className="absolute left-0 right-0 top-0 h-[2px] bg-gradient-to-r from-orange-200 to-transparent opacity-80 pointer-events-none" aria-hidden="true" />
+            <div className="absolute left-0 right-0 bottom-0 h-[2px] bg-gradient-to-r from-orange-200 to-transparent opacity-80 pointer-events-none" aria-hidden="true" />
             <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
               <div>
                 <span className="block text-sm font-medium text-orange-800">Tuần {week.week_index}</span>

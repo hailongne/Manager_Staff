@@ -17,6 +17,10 @@ const ProfileUpdateRequest = sequelize.define('ProfileUpdateRequest', {
     type: DataTypes.JSON, 
     allowNull: false 
   },
+  reason: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
   status: {
     type: DataTypes.ENUM(...REQUEST_STATUS),
     allowNull: false,

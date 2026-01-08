@@ -38,7 +38,6 @@ export interface FormState {
   email: string;
   username: string;
   phone: string;
-  position: string;
   department: string;
   department_position: string;
   address: string;
@@ -125,6 +124,7 @@ export interface UserTableProps {
   isAdmin: boolean;
   onEdit: (user: ApiUser) => void;
   onUploadCv?: (user: ApiUser, file: File) => Promise<ApiUser | void>;
+  onUploadAvatar?: (user: ApiUser, file: File) => Promise<ApiUser | void>;
   onDelete: (user: ApiUser) => void;
   onAddUser: () => void;
   renderStatusBadge: (status: string | null | undefined) => React.ReactNode;

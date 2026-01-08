@@ -1815,19 +1815,23 @@ exports.assignWeek = async (req, res) => {
           })
         );
 
-        await createAdminNotification({
-          type: 'chain_assignment',
-          title: 'Phân công KPI',
-          message: `${actorLabel} đã giao ${assignedRecords.length} nhiệm vụ cho tuần ${normalizedWeekIndex} của chuỗi ${chain?.name || ''}`.trim(),
-          metadata: {
-            chain_id: chain?.chain_id || kpi.chain_id,
-            assignment_ids: assignedRecords.map((assignment) => assignment.assignment_id),
-            week_index: normalizedWeekIndex,
-            event: 'assigned'
-          },
-          entityType: 'chain_kpi',
-          entityId: Number(kpi_id)
-        });
+        // Do not notify admins about assignments they created themselves
+        const actorRole = req.user && req.user.role ? req.user.role : null;
+        if (actorRole !== 'admin') {
+          await createAdminNotification({
+            type: 'chain_assignment',
+            title: 'Phân công KPI',
+            message: `${actorLabel} đã giao ${assignedRecords.length} nhiệm vụ cho tuần ${normalizedWeekIndex} của chuỗi ${chain?.name || ''}`.trim(),
+            metadata: {
+              chain_id: chain?.chain_id || kpi.chain_id,
+              assignment_ids: assignedRecords.map((assignment) => assignment.assignment_id),
+              week_index: normalizedWeekIndex,
+              event: 'assigned'
+            },
+            entityType: 'chain_kpi',
+            entityId: Number(kpi_id)
+          });
+        }
       }
     } catch (notifyErr) {
       console.error('Không thể gửi thông báo giao việc', notifyErr);

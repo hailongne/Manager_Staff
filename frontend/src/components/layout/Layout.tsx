@@ -34,7 +34,7 @@ export default function Layout() {
         >
           <SidebarItem to="/dashboard">Tổng quan</SidebarItem>
           <SidebarItem to="/reports">Báo cáo</SidebarItem>
-          {user?.role === "user" && (
+          {(user?.role === "user" || user?.role === "leader") && (
             <SidebarItem to="/profile">Hồ sơ</SidebarItem>
           )}
           <SidebarItem to="/assignments">Công việc</SidebarItem>
@@ -68,7 +68,7 @@ export default function Layout() {
             />
             <div>
               <div className="text-sm font-medium text-gray-700">{user?.name}</div>
-              <div className="text-xs text-gray-500">{user?.position || user?.department || ''}</div>
+              <div className="text-xs text-gray-500">{user?.department || ''}</div>
             </div>
           </div>
           <div className="flex items-center gap-4">
