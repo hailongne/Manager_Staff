@@ -218,7 +218,7 @@ export default function UsersPage() {
 
       {/* User Table Header */}
       <div className="px-5 pb-2">
-        <h2 className="text-sm font-semibold text-orange-600 uppercase">Tài khoản nhân viên</h2>
+        <h2 className="text-sm font-semibold text-orange-600 uppercase">Danh sách nhân viên</h2>
         <p className="text-xs text-gray-500">
           Quản lý quyền truy cập hệ thống và phân công vai trò.
         </p>
@@ -241,6 +241,12 @@ export default function UsersPage() {
       />
 
       {/* Admin Table (only for admins) */}
+      <div className="px-5 pb-2 mt-5">
+        <h2 className="text-sm font-semibold text-orange-600 uppercase">Danh sách quản trị viên</h2>
+        <p className="text-xs text-gray-500">
+          Quản lý quyền truy cập hệ thống và phân công vai trò.
+        </p>
+      </div>
       {isAdmin ? (
         <AdminTable
           admins={admins}

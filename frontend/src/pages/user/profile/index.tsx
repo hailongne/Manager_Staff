@@ -271,9 +271,9 @@ export default function ProfilePage() {
       { field: "date_joined" },
       { field: "official_confirmed_at" },
       { field: "annual_leave_quota" },
-      { field: "remaining_leave_days" },
       { field: "work_shift_start" },
       { field: "work_shift_end" },
+      { field: "remaining_leave_days" },
       { field: "note", span: 2 }
     ];
 
@@ -302,7 +302,7 @@ export default function ProfilePage() {
         <p className="text-sm text-gray-500">Cập nhật thông tin cá nhân và theo dõi trạng thái phê duyệt.</p>
       </header>
 
-      <aside className="md:col-span-1 flex items-start">
+      <aside className="md:col-span-1 mb-5 flex items-start">
         <div className="flex items-center gap-4">
           <div className="relative">
             <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden bg-slate-800 flex items-center justify-center">
@@ -318,14 +318,14 @@ export default function ProfilePage() {
             {/* small overlapping edit icon */}
             <button
               onClick={() => avatarInputRef.current?.click()}
-              className="absolute right-0 bottom-0 -translate-x-1/4 translate-y-1/4 w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs border border-orange-600 shadow-sm transition-colors duration-200 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400/30"
+              className="absolute right-[-12px] top-17 bottom-0 -translate-x-1/4 translate-y-1/4 w-7 h-7 rounded-full bg-orange-500 flex items-center justify-center text-white text-[10px] border border-orange-600 shadow-sm transition-colors duration-200 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400/30"
               title="Cập nhật ảnh đại diện"
             >
               ✎
             </button>
 
             {avatarPendingFile ? (
-              <div className="absolute left-1/2 bottom-0 -translate-x-1/2 flex items-center gap-2 p-1">
+              <div className="absolute left-1/2 bottom-[-10px] -translate-x-1/2 flex items-center gap-2 p-1">
                 <button
                   onClick={async () => {
                     if (!avatarPendingFile || !user) return;
@@ -340,7 +340,7 @@ export default function ProfilePage() {
                       setAvatarPendingFile(null);
                     }
                   }}
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-orange-500 hover:bg-orange-600 text-white text-sm shadow-md transition"
+                  className="w-6 h-6 flex items-center justify-center rounded-full bg-orange-500 hover:bg-orange-600 text-white text-xs shadow-sm transition"
                   title="Cập nhật ảnh"
                 >
                   ✓
@@ -351,7 +351,7 @@ export default function ProfilePage() {
                     setAvatarPreviewUrl(null);
                     setAvatarPendingFile(null);
                   }}
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-700 border border-slate-600 text-slate-200 text-sm shadow-md transition"
+                  className="w-6 h-6 flex items-center justify-center rounded-full bg-slate-700 border border-slate-600 text-slate-200 text-xs shadow-sm transition"
                   title="Hủy"
                 >
                   ✕
