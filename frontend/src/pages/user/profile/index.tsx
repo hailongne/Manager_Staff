@@ -127,6 +127,11 @@ export default function ProfilePage() {
   const [pwMessage, setPwMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [pwMessageVisible, setPwMessageVisible] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [showPasswordField, setShowPasswordField] = useState<{
+    currentPassword: boolean;
+    newPassword: boolean;
+    confirmPassword: boolean;
+  }>({ currentPassword: false, newPassword: false, confirmPassword: false });
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [requests, setRequests] = useState<ProfileUpdateRequest[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(false);
@@ -151,6 +156,17 @@ export default function ProfilePage() {
 
   const resolvedAvatarUrl = resolveAssetUrl((user as { avatar_url?: string })?.avatar_url ?? null);
   const resolvedCvUrl = resolveAssetUrl((user as { cv_url?: string })?.cv_url ?? null);
+
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+
+  useEffect(() => {
+    if (!showAvatarModal) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowAvatarModal(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showAvatarModal]);
 
   const editable = useMemo<FormState>(() => ({
     name: user?.name ?? "",
@@ -305,7 +321,21 @@ export default function ProfilePage() {
       <aside className="md:col-span-1 mb-5 flex items-start">
         <div className="flex items-center gap-4">
           <div className="relative">
-            <div className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden bg-slate-800 flex items-center justify-center">
+            <div
+              className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden bg-slate-800 flex items-center justify-center cursor-pointer"
+              role="button"
+              tabIndex={0}
+              onClick={() => {
+                const url = avatarPreviewUrl ?? resolvedAvatarUrl;
+                if (url) setShowAvatarModal(true);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  const url = avatarPreviewUrl ?? resolvedAvatarUrl;
+                  if (url) setShowAvatarModal(true);
+                }
+              }}
+            >
               {avatarPreviewUrl ? (
                 <img src={avatarPreviewUrl} alt="avatar-preview" className="w-full h-full object-cover" />
               ) : resolvedAvatarUrl ? (
@@ -518,34 +548,97 @@ export default function ProfilePage() {
 
                   <form onSubmit={handlePwSubmit} className="space-y-3">
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1">Mật khẩu hiện tại</label>
-                      <input
-                        type="password"
-                        value={passwordForm.currentPassword}
-                        onChange={handlePwChange("currentPassword")}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
-                        autoComplete="current-password"
-                      />
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Mật khẩu hiện tại</label>
+                        <div className="relative">
+                          <input
+                            type={showPasswordField.currentPassword ? "text" : "password"}
+                            value={passwordForm.currentPassword}
+                            onChange={handlePwChange("currentPassword")}
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200 pr-9"
+                            autoComplete="current-password"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPasswordField((s) => ({ ...s, currentPassword: !s.currentPassword }))}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700"
+                            aria-label={showPasswordField.currentPassword ? "Ẩn mật khẩu" : "Hiển thị mật khẩu"}
+                          >
+                              {showPasswordField.currentPassword ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                                <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-5 0-9.27-3-11-8 1.12-2.8 3.02-4.99 5.15-6.34" />
+                                <path d="M1 1l22 22" />
+                                <path d="M9.88 9.88A3 3 0 0 1 14.12 14.12" />
+                              </svg>
+                            ) : (
+                              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                                <path d="M1.05 12C2.27 7.2 6.52 4 12 4s9.73 3.2 10.95 8c-1.22 4.8-5.47 8-10.95 8S2.27 16.8 1.05 12z" />
+                                <circle cx="12" cy="12" r="3" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">Mật khẩu mới</label>
-                      <input
-                        type="password"
-                        value={passwordForm.newPassword}
-                        onChange={handlePwChange("newPassword")}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
-                        autoComplete="new-password"
-                      />
+                      <div className="relative">
+                        <input
+                          type={showPasswordField.newPassword ? "text" : "password"}
+                          value={passwordForm.newPassword}
+                          onChange={handlePwChange("newPassword")}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200 pr-9"
+                          autoComplete="new-password"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPasswordField((s) => ({ ...s, newPassword: !s.newPassword }))}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 w-8 h-8 flex items-center justify-center"
+                          aria-label={showPasswordField.newPassword ? "Ẩn mật khẩu" : "Hiển thị mật khẩu"}
+                        >
+                          {showPasswordField.newPassword ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                              <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-5 0-9.27-3-11-8 1.12-2.8 3.02-4.99 5.15-6.34" />
+                              <path d="M1 1l22 22" />
+                              <path d="M9.88 9.88A3 3 0 0 1 14.12 14.12" />
+                            </svg>
+                          ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                              <path d="M1.05 12C2.27 7.2 6.52 4 12 4s9.73 3.2 10.95 8c-1.22 4.8-5.47 8-10.95 8S2.27 16.8 1.05 12z" />
+                              <circle cx="12" cy="12" r="3" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-1">Xác nhận mật khẩu mới</label>
-                      <input
-                        type="password"
-                        value={passwordForm.confirmPassword}
-                        onChange={handlePwChange("confirmPassword")}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
-                        autoComplete="new-password"
-                      />
+                      <div className="relative">
+                        <input
+                          type={showPasswordField.confirmPassword ? "text" : "password"}
+                          value={passwordForm.confirmPassword}
+                          onChange={handlePwChange("confirmPassword")}
+                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200 pr-9"
+                          autoComplete="new-password"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPasswordField((s) => ({ ...s, confirmPassword: !s.confirmPassword }))}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 w-8 h-8 flex items-center justify-center"
+                          aria-label={showPasswordField.confirmPassword ? "Ẩn mật khẩu" : "Hiển thị mật khẩu"}
+                        >
+                          {showPasswordField.confirmPassword ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                              <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-5 0-9.27-3-11-8 1.12-2.8 3.02-4.99 5.15-6.34" />
+                              <path d="M1 1l22 22" />
+                              <path d="M9.88 9.88A3 3 0 0 1 14.12 14.12" />
+                            </svg>
+                          ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                              <path d="M1.05 12C2.27 7.2 6.52 4 12 4s9.73 3.2 10.95 8c-1.22 4.8-5.47 8-10.95 8S2.27 16.8 1.05 12z" />
+                              <circle cx="12" cy="12" r="3" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
                     </div>
                     <div className="flex justify-end">
                       <button
@@ -731,6 +824,30 @@ export default function ProfilePage() {
           </div>
         )}
       </section>
+      {showAvatarModal ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setShowAvatarModal(false)}
+        >
+          <div
+            className="relative max-w-full max-h-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowAvatarModal(false)}
+              className="absolute right-2 top-2 z-10 rounded-full text-white p-2"
+              aria-label="Đóng"
+            >
+              ✕
+            </button>
+            <img
+              src={avatarPreviewUrl ?? resolvedAvatarUrl ?? undefined}
+              alt="avatar-large"
+              className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-xl"
+            />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

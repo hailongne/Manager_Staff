@@ -76,16 +76,16 @@ export function StatsSection({
           </select>
           <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">▾</span>
         </div>
-        <div className="px-3 py-1.5 rounded-full bg-green-50 text-green-600 text-xs font-semibold">
+        <div className="px-3 h-8 rounded-full bg-green-50 border border-green-500 text-green-600 text-xs font-semibold flex items-center">
           Tổng: {stats.total}
         </div>
         {stats.byStatus.map((item) => (
           <div
             key={item.status}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold ${
+            className={`px-3 h-8 rounded-full text-xs font-semibold flex items-center ${
               item.status === "Đã nghỉ"
-                ? "bg-gray-100 text-gray-400 opacity-50"
-                : "bg-orange-50 text-orange-600"
+          ? "bg-gray-100 border border-gray-500 text-gray-400 opacity-50"
+          : "bg-orange-50 border border-orange-500 text-orange-600"
             }`}
           >
             {item.status}: {item.value}

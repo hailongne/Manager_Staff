@@ -1,5 +1,5 @@
 import type { ApiUser } from "../types";
-import { formatDate, SUPER_ADMIN_ID } from "../utils";
+import { SUPER_ADMIN_ID } from "../utils";
 
 interface AdminTableProps {
   admins: ApiUser[];
@@ -68,24 +68,17 @@ export function AdminTable({
                   <tr key={item.user_id} className="border-t border-gray-100 hover:bg-orange-50/30">
                     <td className="px-4 py-3">
                       <p className="font-semibold text-gray-800">{item.name}</p>
-                      <p className="text-xs text-gray-500">Mã: #{item.user_id}</p>
+                      <p className="text-xs text-gray-500">Mã: 00{item.user_id}</p>
                     </td>
                     <td className="px-4 py-3 space-y-1">
                       <p className="text-sm text-gray-700">Email: {item.email ?? "-"}</p>
-                      <p className="text-sm text-gray-700">Tài khoản: {item.username ?? "-"}</p>
-                      <p className="text-xs text-gray-500">SĐT: {item.phone ?? "-"}</p>
+                      <p className="text-sm text-gray-700">Username: {item.username ?? "-"}</p>
                     </td>
                     <td className="px-4 py-3 space-y-1">
                       <div>{renderStatusBadge(item.employment_status)}</div>
                       <p className="text-sm text-gray-700">Phòng ban: {item.department ?? "-"}</p>
                       <p className="text-xs text-gray-500">
                         Chức vụ ban: {item.department_position ?? "-"}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Ngày vào: {formatDate(item.date_joined)}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Ca: {item.work_shift_start ?? "--"} → {item.work_shift_end ?? "--"}
                       </p>
                     </td>
                     <td className="px-4 py-3 text-right">
